@@ -14,7 +14,10 @@
 // MediaGate. If not, see <https://www.gnu.org/licenses/>.
 
 import Foundation
+
+#if canImport(ffmpegkit)
 import ffmpegkit
+#endif
 
 /// A type that can transcode video files to MP4 (H.264 + AAC).
 protocol VideoConverting: Sendable {
@@ -33,12 +36,15 @@ protocol VideoConverting: Sendable {
 /// Errors specific to video conversion.
 enum VideoConversionError: LocalizedError, Sendable {
     case ffmpegFailed(String)
+    case ffmpegNotAvailable
     case cancelled
 
     var errorDescription: String? {
         switch self {
         case .ffmpegFailed(let message):
             return "Video conversion failed: \(message)"
+        case .ffmpegNotAvailable:
+            return "ffmpeg-kit is not installed. Run scripts/setup.sh to download it."
         case .cancelled:
             return "Video conversion was cancelled."
         }
@@ -49,6 +55,7 @@ enum VideoConversionError: LocalizedError, Sendable {
 final class FFmpegVideoConverter: VideoConverting, @unchecked Sendable {
 
     func convert(input: URL, output: URL, progress: @Sendable @escaping (Double) -> Void) async throws {
+        #if canImport(ffmpegkit)
         // First, probe the input to get duration for progress calculation
         let duration = await probeDuration(of: input)
 
@@ -65,6 +72,9 @@ final class FFmpegVideoConverter: VideoConverting, @unchecked Sendable {
                 throw VideoConversionError.ffmpegFailed("Both hardware and software encoding failed.")
             }
         }
+        #else
+        throw VideoConversionError.ffmpegNotAvailable
+        #endif
     }
 
     // MARK: - Private
@@ -84,6 +94,7 @@ final class FFmpegVideoConverter: VideoConverting, @unchecked Sendable {
         return "-i \"\(input.path)\" -c:v \(encoder)\(bitrateFlag)\(preset) -c:a aac -movflags +faststart -y \"\(output.path)\""
     }
 
+    #if canImport(ffmpegkit)
     /// Probes the input file to determine its duration in seconds.
     private func probeDuration(of url: URL) async -> Double {
         await withCheckedContinuation { continuation in
@@ -128,4 +139,5 @@ final class FFmpegVideoConverter: VideoConverting, @unchecked Sendable {
             }
         }
     }
+    #endif
 }

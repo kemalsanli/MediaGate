@@ -75,7 +75,8 @@ class ShareViewController: UIViewController {
 
     /// Loads the file URL from an NSItemProvider.
     private func loadFileURL(from provider: NSItemProvider) async throws -> (URL, String?) {
-        try await withCheckedThrowingContinuation { continuation in
+        let typeHint = provider.registeredTypeIdentifiers.first
+        return try await withCheckedThrowingContinuation { continuation in
             provider.loadFileRepresentation(forTypeIdentifier: UTType.data.identifier) { url, error in
                 if let error = error {
                     continuation.resume(throwing: error)
@@ -94,7 +95,6 @@ class ShareViewController: UIViewController {
 
                 do {
                     try FileManager.default.copyItem(at: url, to: tempURL)
-                    let typeHint = provider.registeredTypeIdentifiers.first
                     continuation.resume(returning: (tempURL, typeHint))
                 } catch {
                     continuation.resume(throwing: error)
@@ -113,8 +113,9 @@ class ShareViewController: UIViewController {
         let storedFilename = "\(UUID().uuidString)_\(originalFilename)"
         let destinationURL = pendingDir.appendingPathComponent(storedFilename)
 
-        // Stream-copy to avoid memory spikes with large files
-        try FileManager.default.streamCopy(from: sourceURL, to: destinationURL)
+        // copyItem is a filesystem-level operation — it does not load the
+        // file into memory, so it is safe for large videos in the extension.
+        try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
 
         // Write the metadata sidecar
         let pending = PendingConversion(
@@ -131,30 +132,21 @@ class ShareViewController: UIViewController {
     // MARK: - URL Scheme
 
     /// Opens the main app via the `mediagate://convert` URL scheme.
+    ///
+    /// Share Extensions cannot call `UIApplication.shared` directly, so we
+    /// walk the responder chain to find an object that responds to `openURL:`.
     @MainActor
     private func openMainApp() async {
         guard let url = SharedConstants.convertURL as URL? else { return }
 
-        // Share Extensions cannot open URLs directly using UIApplication.shared.open.
-        // Instead, we use the responder chain to find a method that can open URLs.
+        let selector = sel_registerName("openURL:")
         var responder: UIResponder? = self
         while let r = responder {
-            if let application = r as? UIApplication {
-                application.open(url)
-                return
-            }
-            responder = r.next
-        }
-
-        // Fallback: use the openURL selector on the shared application proxy
-        let selector = sel_registerName("openURL:")
-        var target: UIResponder? = self
-        while let r = target {
             if r.responds(to: selector) {
                 r.perform(selector, with: url)
                 return
             }
-            target = r.next
+            responder = r.next
         }
     }
 

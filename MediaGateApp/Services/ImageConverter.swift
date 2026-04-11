@@ -17,6 +17,7 @@ import Foundation
 import CoreImage
 import ImageIO
 import UIKit
+import UniformTypeIdentifiers
 import WebKit
 
 /// A type that can convert image files to PNG or JPEG.

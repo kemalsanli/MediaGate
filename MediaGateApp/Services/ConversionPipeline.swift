@@ -146,7 +146,7 @@ final class ConversionPipeline: Sendable {
             try await videoConverter.convert(input: sourceURL, output: outputURL, progress: progress)
             try await gallerySaver.saveVideo(url: outputURL)
 
-        case .image(let info):
+        case .image(_):
             let tempDir = try FileManager.default.createConversionTempDirectory(jobID: job.id.uuidString)
             let outputURLs = try await imageConverter.convert(input: sourceURL, outputDir: tempDir)
             for url in outputURLs {

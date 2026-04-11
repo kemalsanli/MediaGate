@@ -64,7 +64,7 @@ struct HomeView: View {
         VStack(spacing: 16) {
             Image(systemName: "arrow.triangle.2.circlepath")
                 .font(.system(size: 56, weight: .thin))
-                .foregroundStyle(.accent)
+                .foregroundStyle(Color.accentColor)
 
             Text("Share any unsupported media file to convert and save to Photos")
                 .font(.body)
@@ -142,7 +142,7 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity)
                 .padding(16)
                 .background(Color.accentColor.opacity(0.1))
-                .foregroundStyle(.accent)
+                .foregroundStyle(Color.accentColor)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .buttonStyle(.plain)
