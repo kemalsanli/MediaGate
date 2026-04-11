@@ -142,7 +142,22 @@ class ShareViewController: UIViewController {
                 do {
                     let (tempURL, typeHint) = try await loadFileURL(from: provider)
 
-                    // Step 1: ALWAYS save to shared container first (crash-safe)
+                    // Pre-check: reject files too large
+                    let fileSize = FileManager.default.fileSize(at: tempURL)
+                    if fileSize > SafetyChecks.maxFileSize {
+                        try? FileManager.default.removeItem(at: tempURL)
+                        let sizeStr = ByteCountFormatter.string(fromByteCount: Int64(fileSize), countStyle: .file)
+                        await showResult(
+                            icon: "exclamationmark.triangle.fill", color: .systemOrange,
+                            title: NSLocalizedString("File too large", comment: ""),
+                            detail: "\(sizeStr) — max 1 GB"
+                        )
+                        try? await Task.sleep(for: .seconds(2.0))
+                        completeRequest()
+                        return
+                    }
+
+                    // Step 1: Copy to shared container (crash-safe backup)
                     let pending = try saveToSharedContainer(sourceURL: tempURL, typeHint: typeHint)
 
                     // Step 2: Try in-extension conversion
@@ -153,6 +168,15 @@ class ShareViewController: UIViewController {
                     } else {
                         queuedCount += 1
                     }
+                } catch let shareErr as ShareError {
+                    await showResult(
+                        icon: "exclamationmark.triangle.fill", color: .systemOrange,
+                        title: NSLocalizedString("File too large", comment: ""),
+                        detail: shareErr.localizedDescription
+                    )
+                    try? await Task.sleep(for: .seconds(2.0))
+                    completeRequest()
+                    return
                 } catch {
                     queuedCount += 1
                     print("[ShareExt] Error: \(error.localizedDescription)")
@@ -200,6 +224,13 @@ class ShareViewController: UIViewController {
             provider.loadFileRepresentation(forTypeIdentifier: typeID) { url, error in
                 if let error { continuation.resume(throwing: error); return }
                 guard let url else { continuation.resume(throwing: ShareError.noFileURL); return }
+
+                // Check file size BEFORE copying — prevent extension OOM on huge files
+                let size = FileManager.default.fileSize(at: url)
+                if size > SafetyChecks.maxFileSize {
+                    continuation.resume(throwing: ShareError.fileTooLarge(size))
+                    return
+                }
 
                 let tempURL = FileManager.default.temporaryDirectory
                     .appendingPathComponent(UUID().uuidString + "_" + url.lastPathComponent)
@@ -491,12 +522,16 @@ private enum ShareError: LocalizedError {
     case noFileURL
     case sharedContainerUnavailable
     case timeout
+    case fileTooLarge(UInt64)
 
     var errorDescription: String? {
         switch self {
         case .noFileURL: return "No file URL was provided."
         case .sharedContainerUnavailable: return "Shared container not available."
         case .timeout: return "Conversion timed out."
+        case .fileTooLarge(let size):
+            let s = ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)
+            return "File too large (\(s)). Maximum is 1 GB."
         }
     }
 }
