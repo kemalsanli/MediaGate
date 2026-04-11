@@ -142,61 +142,69 @@ public final class NativeImageConverter: ImageConverting, @unchecked Sendable {
         return outputURLs
     }
 
-    /// Processes a RAW photo using CoreImage with the actual file URL.
+    /// Processes a RAW photo file.
     ///
-    /// Uses CIRAWFilter → CIFilter → CIImage fallback chain, then renders
-    /// through CGImage → UIImage → JPEG for proper tone mapping and color
-    /// space conversion. Direct CIContext.writeJPEGRepresentation can produce
-    /// broken output from RAW files due to HDR/linear color space issues.
+    /// Strategy (in order of reliability):
+    /// 1. ImageIO direct read — iOS 16+ can natively decode many RAW formats
+    /// 2. CIRAWFilter → UIImage.jpegData pipeline
+    /// 3. CIImage direct load as last resort
     private func processRAW(input: URL, outputDir: URL) throws -> URL {
-        let ciImage: CIImage?
-
-        // Try CIRAWFilter (iOS 15+) first for best RAW rendering
-        if let rawFilter = CIRAWFilter(imageURL: input) {
-            // Apply default auto-adjustments for proper exposure/tone
-            rawFilter.boostAmount = 1.0
-            rawFilter.isGamutMappingEnabled = true
-            ciImage = rawFilter.outputImage
-        } else if let filter = CIFilter(imageURL: input, options: [:]) {
-            ciImage = filter.outputImage
-        } else {
-            ciImage = CIImage(contentsOf: input)
-        }
-
-        guard let image = ciImage else {
-            throw ImageConversionError.failedToReadImage
-        }
-
-        // Render CIImage → CGImage → UIImage → JPEG
-        // This pipeline properly handles tone mapping, color space conversion,
-        // and HDR→SDR clamping that writeJPEGRepresentation misses.
-        let context = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!])
-
-        guard let cgImage = context.createCGImage(
-            image,
-            from: image.extent,
-            format: .RGBA8,
-            colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!
-        ) else {
-            throw ImageConversionError.failedToReadImage
-        }
-
-        let uiImage = UIImage(cgImage: cgImage)
-        let quality = ConversionSettings.shared.compressionQuality
-
-        guard let jpegData = uiImage.jpegData(compressionQuality: quality) else {
-            throw ImageConversionError.failedToWriteImage
-        }
-
         let baseName = input.deletingPathExtension().lastPathComponent
         let outputURL = outputDir.appendingPathComponent("\(baseName).jpeg")
-        try jpegData.write(to: outputURL, options: .atomic)
+        let quality = ConversionSettings.shared.compressionQuality
 
-        guard jpegData.count > 0 else {
-            throw ImageConversionError.failedToWriteImage
+        // Strategy 1: ImageIO direct read (most reliable for iOS-supported RAW)
+        if let source = CGImageSourceCreateWithURL(input as CFURL, nil),
+           let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) {
+            let uiImage = UIImage(cgImage: cgImage)
+            if let data = uiImage.jpegData(compressionQuality: quality), data.count > 1000 {
+                try data.write(to: outputURL, options: .atomic)
+                return outputURL
+            }
         }
 
-        return outputURL
+        // Strategy 2: CIRAWFilter (best quality for RAW development)
+        if let rawFilter = CIRAWFilter(imageURL: input) {
+            rawFilter.isGamutMappingEnabled = true
+            if let ciOutput = rawFilter.outputImage {
+                let context = CIContext()
+                let extent = ciOutput.extent
+                if let cgImage = context.createCGImage(ciOutput, from: extent) {
+                    let uiImage = UIImage(cgImage: cgImage)
+                    if let data = uiImage.jpegData(compressionQuality: quality), data.count > 1000 {
+                        try data.write(to: outputURL, options: .atomic)
+                        return outputURL
+                    }
+                }
+            }
+        }
+
+        // Strategy 3: CIFilter with imageURL
+        if let filter = CIFilter(imageURL: input, options: [:]),
+           let ciOutput = filter.outputImage {
+            let context = CIContext()
+            if let cgImage = context.createCGImage(ciOutput, from: ciOutput.extent) {
+                let uiImage = UIImage(cgImage: cgImage)
+                if let data = uiImage.jpegData(compressionQuality: quality), data.count > 1000 {
+                    try data.write(to: outputURL, options: .atomic)
+                    return outputURL
+                }
+            }
+        }
+
+        // Strategy 4: CIImage direct
+        if let ciImage = CIImage(contentsOf: input) {
+            let context = CIContext()
+            if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
+                let uiImage = UIImage(cgImage: cgImage)
+                if let data = uiImage.jpegData(compressionQuality: quality), data.count > 1000 {
+                    try data.write(to: outputURL, options: .atomic)
+                    return outputURL
+                }
+            }
+        }
+
+        throw ImageConversionError.failedToReadImage
     }
 
     // MARK: - SVG (WKWebView snapshot)
