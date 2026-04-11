@@ -129,6 +129,15 @@ class ShareViewController: UIViewController {
         }
 
         Task {
+            // Global safety timeout — extension MUST dismiss within 25 seconds
+            // regardless of what happens. Prevents frozen/transparent screen.
+            let timeoutTask = Task {
+                try await Task.sleep(for: .seconds(25))
+                SharedConstants.hasPendingConversions = true
+                completeRequest()
+            }
+            defer { timeoutTask.cancel() }
+
             var savedCount = 0
             var queuedCount = 0
 
@@ -267,6 +276,17 @@ class ShareViewController: UIViewController {
 
     // MARK: - In-Extension Conversion
 
+    /// File extensions that are too memory-intensive to process in the extension.
+    private static let heavyImageFormats: Set<String> = [
+        "cr2", "nef", "arw", "dng", "orf", "rw2", "raf", "pef",
+        "srw", "x3f", "3fr", "erf", "kdc", "mrw", "dcr", // RAW photos
+        "psd", "svg" // Other heavy formats
+    ]
+
+    /// Max image file size for in-extension conversion (5 MB).
+    /// Larger images are queued for the main app.
+    private static let maxImageSizeForExtension: UInt64 = 5_000_000
+
     /// Attempts to convert and save the file directly in the extension.
     ///
     /// - Returns: `true` if successfully saved to Photos, `false` if queued for main app.
@@ -289,6 +309,13 @@ class ShareViewController: UIViewController {
                 return true
 
             case .image:
+                // RAW photos and large images are too heavy for extension — queue for main app
+                let ext = sourceURL.pathExtension.lowercased()
+                let fileSize = FileManager.default.fileSize(at: sourceURL)
+                if Self.heavyImageFormats.contains(ext) || fileSize > Self.maxImageSizeForExtension {
+                    return false
+                }
+
                 let tempDir = try FileManager.default.createConversionTempDirectory(jobID: pending.id.uuidString)
                 let outputs = try await imageConverter.convert(input: sourceURL, outputDir: tempDir)
                 for url in outputs {
