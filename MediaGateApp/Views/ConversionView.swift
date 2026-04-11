@@ -17,17 +17,20 @@ import SwiftUI
 
 /// Displays conversion progress for one or more files.
 ///
-/// Shown when the app is opened via the `mediagate://convert` URL scheme.
 /// Each file appears in a list with its current conversion status.
+/// On completion, a summary with a "Done" button is shown.
 struct ConversionView: View {
 
     @ObservedObject var viewModel: ConversionViewModel
+    var onDismiss: () -> Void
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 if viewModel.isComplete {
                     completionSummary
+                } else if viewModel.totalCount == 0 && !viewModel.isActive {
+                    emptyState
                 } else {
                     headerBar
                     fileList
@@ -37,6 +40,23 @@ struct ConversionView: View {
             .navigationTitle(String(localized: "Converting"))
             .navigationBarTitleDisplayMode(.inline)
         }
+    }
+
+    // MARK: - Empty State
+
+    private var emptyState: some View {
+        VStack(spacing: 20) {
+            Spacer()
+            Image(systemName: "doc.questionmark")
+                .font(.system(size: 56))
+                .foregroundStyle(.secondary)
+            Text("No files to convert")
+                .font(.headline)
+            Button("Done") { onDismiss() }
+                .buttonStyle(.bordered)
+            Spacer()
+        }
+        .padding()
     }
 
     // MARK: - Header
@@ -100,34 +120,73 @@ struct ConversionView: View {
                 .foregroundStyle(.green)
 
         case .failed(let error):
-            Label(error, systemImage: "xmark.circle.fill")
-                .font(.caption)
-                .foregroundStyle(.red)
-                .lineLimit(2)
+            VStack(alignment: .leading, spacing: 4) {
+                Label("Failed", systemImage: "xmark.circle.fill")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.red)
+                Text(error)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
     // MARK: - Completion Summary
 
     private var completionSummary: some View {
-        VStack(spacing: 20) {
-            Spacer()
+        ScrollView {
+            VStack(spacing: 20) {
+                Spacer(minLength: 40)
 
-            Image(systemName: viewModel.failCount == 0 ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                .font(.system(size: 56))
-                .foregroundStyle(viewModel.failCount == 0 ? .green : .orange)
+                Image(systemName: viewModel.failCount == 0 ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                    .font(.system(size: 56))
+                    .foregroundStyle(viewModel.failCount == 0 ? .green : .orange)
 
-            if viewModel.failCount == 0 {
-                Text("All files converted successfully!")
-                    .font(.headline)
-            } else {
-                Text("\(viewModel.successCount) succeeded, \(viewModel.failCount) failed")
-                    .font(.headline)
+                if viewModel.failCount == 0 {
+                    Text("All files converted successfully!")
+                        .font(.headline)
+                } else {
+                    Text("\(viewModel.successCount) succeeded, \(viewModel.failCount) failed")
+                        .font(.headline)
+                }
+
+                // Show error details for failed files
+                let failedFiles = viewModel.files.filter {
+                    if case .failed = $0.status { return true }
+                    return false
+                }
+                if !failedFiles.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(failedFiles) { file in
+                            if case .failed(let error) = file.status {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(file.filename)
+                                        .font(.caption.weight(.medium))
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                    Text(error)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .padding(.horizontal, 24)
+                }
+
+                Button("Done") { onDismiss() }
+                    .font(.body.weight(.medium))
+                    .buttonStyle(.borderedProminent)
+                    .padding(.top, 8)
+
+                Spacer(minLength: 40)
             }
-
-            Spacer()
         }
-        .padding()
     }
 
     // MARK: - Cancel
@@ -137,6 +196,7 @@ struct ConversionView: View {
             if viewModel.isActive {
                 Button(role: .destructive) {
                     viewModel.cancelConversion()
+                    onDismiss()
                 } label: {
                     Text("Cancel All")
                         .font(.body.weight(.medium))

@@ -18,27 +18,17 @@ import MediaGateKit
 
 /// Events emitted by the conversion pipeline as it processes files.
 enum ConversionEvent: Sendable {
-    /// A conversion job has started.
     case started(filename: String, index: Int, total: Int)
-
-    /// Progress update for the current file (0.0–1.0).
     case progress(filename: String, percent: Double)
-
-    /// A single file conversion completed successfully.
     case completed(filename: String)
-
-    /// A single file conversion failed.
     case failed(filename: String, error: String)
-
-    /// All files have been processed.
     case allDone(successCount: Int, failCount: Int)
 }
 
-/// Orchestrates the full conversion pipeline: detect format, convert if needed,
-/// save to Photos, and clean up temporary files.
+/// Orchestrates the full conversion pipeline with safety checks.
 ///
-/// The pipeline processes files sequentially to manage memory usage, emitting
-/// ``ConversionEvent`` values via an `AsyncStream`.
+/// Every file goes through: preflight → detect → convert → save → cleanup.
+/// Errors are caught per-file so one bad file doesn't stop the batch.
 final class ConversionPipeline: Sendable {
 
     private let formatDetector: FormatDetecting
@@ -58,9 +48,6 @@ final class ConversionPipeline: Sendable {
         self.gallerySaver = gallerySaver
     }
 
-    /// Processes all pending conversions from the shared container.
-    ///
-    /// - Returns: An `AsyncStream` of ``ConversionEvent`` values.
     func processAll() -> AsyncStream<ConversionEvent> {
         AsyncStream { continuation in
             Task {
@@ -105,13 +92,10 @@ final class ConversionPipeline: Sendable {
                 failCount += 1
             }
 
-            // Clean up the pending files for this job
             cleanupPendingJob(job)
         }
 
-        // Clean up all temp files
         FileManager.default.cleanupAllConversionTempFiles()
-
         continuation.yield(.allDone(successCount: successCount, failCount: failCount))
     }
 
@@ -124,18 +108,15 @@ final class ConversionPipeline: Sendable {
         }
 
         let sourceURL = pendingDir.appendingPathComponent(job.storedFilename)
+
+        // === Safety checks ===
+        try SafetyChecks.preflight(url: sourceURL)
+
         let format = formatDetector.detect(fileURL: sourceURL)
 
         switch format {
         case .nativelySupported:
-            // Save directly — no conversion needed
-            let ext = sourceURL.pathExtension.lowercased()
-            let videoExts = Set(["mp4", "mov", "m4v", "hevc"])
-            if videoExts.contains(ext) {
-                try await gallerySaver.saveVideo(url: sourceURL)
-            } else {
-                try await gallerySaver.saveImage(url: sourceURL)
-            }
+            try await saveNativeFile(url: sourceURL)
             progress(1.0)
 
         case .video(let info):
@@ -143,10 +124,17 @@ final class ConversionPipeline: Sendable {
             let outputURL = tempDir.appendingPathComponent(
                 sourceURL.deletingPathExtension().lastPathComponent + ".\(info.outputExtension)"
             )
-            try await videoConverter.convert(input: sourceURL, output: outputURL, progress: progress)
-            try await gallerySaver.saveVideo(url: outputURL)
 
-        case .image(_):
+            do {
+                try await videoConverter.convert(input: sourceURL, output: outputURL, progress: progress)
+                try await gallerySaver.saveVideo(url: outputURL)
+            } catch {
+                // Clean up partial output on failure
+                try? FileManager.default.removeItem(at: outputURL)
+                throw error
+            }
+
+        case .image:
             let tempDir = try FileManager.default.createConversionTempDirectory(jobID: job.id.uuidString)
             let outputURLs = try await imageConverter.convert(input: sourceURL, outputDir: tempDir)
             for url in outputURLs {
@@ -159,12 +147,27 @@ final class ConversionPipeline: Sendable {
         }
     }
 
-    /// Removes the pending conversion metadata and media file from the shared container.
+    /// Saves a natively-supported file, using magic bytes (not extension) to
+    /// determine whether it's a video or image.
+    private func saveNativeFile(url: URL) async throws {
+        let magicHint = MagicBytes.identify(fileURL: url)
+        let videoFormats: Set<String> = ["mp4", "mov", "m4v"]
+        let isVideo = magicHint.map { videoFormats.contains($0) } ?? false
+
+        // Fallback to extension if magic bytes don't help
+        let ext = url.pathExtension.lowercased()
+        let videoExts: Set<String> = ["mp4", "mov", "m4v", "hevc"]
+
+        if isVideo || videoExts.contains(ext) {
+            try await gallerySaver.saveVideo(url: url)
+        } else {
+            try await gallerySaver.saveImage(url: url)
+        }
+    }
+
     private func cleanupPendingJob(_ job: PendingConversion) {
         guard let pendingDir = SharedConstants.pendingDirectoryURL else { return }
-        let metadataURL = pendingDir.appendingPathComponent(job.metadataFilename)
-        let mediaURL = pendingDir.appendingPathComponent(job.storedFilename)
-        try? FileManager.default.removeItem(at: metadataURL)
-        try? FileManager.default.removeItem(at: mediaURL)
+        try? FileManager.default.removeItem(at: pendingDir.appendingPathComponent(job.metadataFilename))
+        try? FileManager.default.removeItem(at: pendingDir.appendingPathComponent(job.storedFilename))
     }
 }

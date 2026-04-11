@@ -21,7 +21,7 @@ extension FileManager {
     ///
     /// - Parameter jobID: A unique identifier (typically a UUID) to namespace the directory.
     /// - Returns: The URL of the created temporary directory.
-    func createConversionTempDirectory(jobID: String) throws -> URL {
+    public func createConversionTempDirectory(jobID: String) throws -> URL {
         let baseTemp = temporaryDirectory.appendingPathComponent("MediaGate", isDirectory: true)
         let jobDir = baseTemp.appendingPathComponent(jobID, isDirectory: true)
         try createDirectory(at: jobDir, withIntermediateDirectories: true)
@@ -31,7 +31,7 @@ extension FileManager {
     /// Removes the temporary directory for a specific conversion job.
     ///
     /// - Parameter jobID: The unique identifier of the job whose temp files should be cleaned up.
-    func cleanupConversionTempDirectory(jobID: String) {
+    public func cleanupConversionTempDirectory(jobID: String) {
         let baseTemp = temporaryDirectory.appendingPathComponent("MediaGate", isDirectory: true)
         let jobDir = baseTemp.appendingPathComponent(jobID, isDirectory: true)
         try? removeItem(at: jobDir)
@@ -40,7 +40,7 @@ extension FileManager {
     /// Removes all MediaGate temporary files.
     ///
     /// Call this on app launch or when all conversions are complete to reclaim disk space.
-    func cleanupAllConversionTempFiles() {
+    public func cleanupAllConversionTempFiles() {
         let baseTemp = temporaryDirectory.appendingPathComponent("MediaGate", isDirectory: true)
         try? removeItem(at: baseTemp)
     }
@@ -49,7 +49,7 @@ extension FileManager {
     ///
     /// - Parameter url: The file URL to measure.
     /// - Returns: The file size in bytes, or `0` if the file cannot be read.
-    func fileSize(at url: URL) -> UInt64 {
+    public func fileSize(at url: URL) -> UInt64 {
         let attributes = try? attributesOfItem(atPath: url.path)
         return attributes?[.size] as? UInt64 ?? 0
     }
@@ -61,7 +61,7 @@ extension FileManager {
     ///   - source: The source file URL.
     ///   - destination: The destination file URL.
     ///   - bufferSize: The read/write buffer size. Defaults to 1 MB.
-    func streamCopy(from source: URL, to destination: URL, bufferSize: Int = 1_048_576) throws {
+    public func streamCopy(from source: URL, to destination: URL, bufferSize: Int = 1_048_576) throws {
         let input = try FileHandle(forReadingFrom: source)
         defer { try? input.close() }
 

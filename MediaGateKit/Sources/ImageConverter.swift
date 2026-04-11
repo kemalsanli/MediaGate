@@ -21,7 +21,7 @@ import UniformTypeIdentifiers
 import WebKit
 
 /// A type that can convert image files to PNG or JPEG.
-protocol ImageConverting: Sendable {
+public protocol ImageConverting: Sendable {
     /// Converts an image file to the appropriate output format.
     ///
     /// Returns an array because multi-page formats (e.g., TIFF) produce
@@ -34,8 +34,9 @@ protocol ImageConverting: Sendable {
     func convert(input: URL, outputDir: URL) async throws -> [URL]
 }
 
+
 /// Errors specific to image conversion.
-enum ImageConversionError: LocalizedError, Sendable {
+public enum ImageConversionError: LocalizedError, Sendable {
     case failedToCreateImageSource
     case failedToReadImage
     case failedToCreateDestination
@@ -43,7 +44,7 @@ enum ImageConversionError: LocalizedError, Sendable {
     case svgRenderingFailed
     case unsupportedFormat(String)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .failedToCreateImageSource:
             return "Could not read the image file."
@@ -63,9 +64,11 @@ enum ImageConversionError: LocalizedError, Sendable {
 
 /// Converts images using Apple-native frameworks: ImageIO, CoreImage, and
 /// WKWebView (for SVG rasterization).
-final class NativeImageConverter: ImageConverting, @unchecked Sendable {
+public final class NativeImageConverter: ImageConverting, @unchecked Sendable {
 
-    func convert(input: URL, outputDir: URL) async throws -> [URL] {
+    public init() {}
+
+    public func convert(input: URL, outputDir: URL) async throws -> [URL] {
         let ext = input.pathExtension.lowercased()
 
         switch ext {

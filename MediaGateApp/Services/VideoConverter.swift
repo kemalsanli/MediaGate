@@ -15,15 +15,10 @@
 
 import Foundation
 import SwiftFFmpeg
+import MediaGateKit
 
 /// A type that can transcode video files to MP4 (H.264 + AAC).
 protocol VideoConverting: Sendable {
-    /// Transcodes a video file from the input URL to the output URL.
-    ///
-    /// - Parameters:
-    ///   - input: The source video file URL.
-    ///   - output: The destination file URL (should have `.mp4` extension).
-    ///   - progress: A closure called periodically with the conversion progress (0.0–1.0).
     func convert(input: URL, output: URL, progress: @Sendable @escaping (Double) -> Void) async throws
 }
 
@@ -34,6 +29,7 @@ enum VideoConversionError: LocalizedError, Sendable {
     case noDecoder
     case noEncoder
     case cancelled
+    case outputVerificationFailed
 
     var errorDescription: String? {
         switch self {
@@ -42,17 +38,14 @@ enum VideoConversionError: LocalizedError, Sendable {
         case .noDecoder: return "No suitable decoder found for the video format."
         case .noEncoder: return "No suitable H.264 encoder found."
         case .cancelled: return "Video conversion was cancelled."
+        case .outputVerificationFailed: return "Conversion produced an empty or invalid output file."
         }
     }
 }
 
-/// Audio codec IDs that can be muxed directly into MP4 without re-encoding.
 private let mp4CompatibleAudioCodecs: Set<AVCodecID> = [.AAC, .MP3, .FLAC]
 
 /// Converts video files using SwiftFFmpeg with hardware-accelerated encoding.
-///
-/// Pipeline: demux → decode → encode (H.264 VideoToolbox) → mux (MP4).
-/// Audio is remuxed (copied) when the codec is MP4-compatible, skipped otherwise.
 final class FFmpegVideoConverter: VideoConverting, @unchecked Sendable {
 
     func convert(
@@ -63,6 +56,13 @@ final class FFmpegVideoConverter: VideoConverting, @unchecked Sendable {
         try await Task.detached(priority: .userInitiated) {
             try Task.checkCancellation()
             try self.transcode(inputPath: input.path, outputPath: output.path, progress: progress)
+
+            // Verify output file is valid
+            let outputSize = FileManager.default.fileSize(at: output)
+            guard outputSize > 0 else {
+                try? FileManager.default.removeItem(at: output)
+                throw VideoConversionError.outputVerificationFailed
+            }
         }.value
     }
 
@@ -73,9 +73,15 @@ final class FFmpegVideoConverter: VideoConverting, @unchecked Sendable {
         outputPath: String,
         progress: @Sendable @escaping (Double) -> Void
     ) throws {
-        // 1. Open input
-        let ifmtCtx = try AVFormatContext(url: inputPath)
-        try ifmtCtx.findStreamInfo()
+        // 1. Open input — will throw if file is corrupt or unreadable
+        let ifmtCtx: AVFormatContext
+        do {
+            ifmtCtx = try AVFormatContext(url: inputPath)
+            try ifmtCtx.findStreamInfo()
+        } catch {
+            throw VideoConversionError.ffmpegFailed("Cannot open input: \(error.localizedDescription)")
+        }
+
         let totalDuration = Double(ifmtCtx.duration) / Double(AVTimestamp.timebase)
 
         // 2. Find streams
@@ -83,7 +89,6 @@ final class FFmpegVideoConverter: VideoConverting, @unchecked Sendable {
             throw VideoConversionError.noVideoStream
         }
         let audioIdx = ifmtCtx.findBestStream(type: .audio)
-
         let inVideoStream = ifmtCtx.streams[videoIdx]
         let inAudioStream = audioIdx.map { ifmtCtx.streams[$0] }
 
@@ -93,10 +98,19 @@ final class FFmpegVideoConverter: VideoConverting, @unchecked Sendable {
         }
         let decoderCtx = AVCodecContext(codec: decoder)
         decoderCtx.setParameters(inVideoStream.codecParameters)
-        try decoderCtx.openCodec()
+        do {
+            try decoderCtx.openCodec()
+        } catch {
+            throw VideoConversionError.ffmpegFailed("Cannot open decoder: \(error.localizedDescription)")
+        }
 
-        // 4. Create output context (needed to check globalHeader)
-        let ofmtCtx = try AVFormatContext(format: nil, filename: outputPath)
+        // 4. Create output context
+        let ofmtCtx: AVFormatContext
+        do {
+            ofmtCtx = try AVFormatContext(format: nil, filename: outputPath)
+        } catch {
+            throw VideoConversionError.ffmpegFailed("Cannot create output: \(error.localizedDescription)")
+        }
 
         // 5. Set up video encoder
         let encoderCtx = try setupEncoder(
@@ -105,14 +119,13 @@ final class FFmpegVideoConverter: VideoConverting, @unchecked Sendable {
             globalHeader: ofmtCtx.outputFormat!.flags.contains(.globalHeader)
         )
 
-        // 6. Add output video stream
+        // 6. Add output streams
         guard let outVideoStream = ofmtCtx.addStream() else {
             throw VideoConversionError.ffmpegFailed("Failed to create output video stream.")
         }
         outVideoStream.codecParameters.copy(from: encoderCtx)
         outVideoStream.timebase = encoderCtx.timebase
 
-        // 7. Add output audio stream (passthrough for compatible codecs)
         var outAudioStream: AVStream?
         if let inAudio = inAudioStream,
            mp4CompatibleAudioCodecs.contains(inAudio.codecParameters.codecId) {
@@ -124,31 +137,43 @@ final class FFmpegVideoConverter: VideoConverting, @unchecked Sendable {
             }
         }
 
-        // 8. Open output file and write header
-        if !ofmtCtx.outputFormat!.flags.contains(.noFile) {
-            try ofmtCtx.openOutput(url: outputPath, flags: .write)
+        // 7. Open output and write header
+        do {
+            if !ofmtCtx.outputFormat!.flags.contains(.noFile) {
+                try ofmtCtx.openOutput(url: outputPath, flags: .write)
+            }
+            try ofmtCtx.writeHeader()
+        } catch {
+            throw VideoConversionError.ffmpegFailed("Cannot write output header: \(error.localizedDescription)")
         }
-        try ofmtCtx.writeHeader()
 
-        // 9. Transcode loop
+        // 8. Transcode loop
         let pkt = AVPacket()
         let frame = AVFrame()
         var lastProgress = 0.0
 
         while true {
+            try Task.checkCancellation()
+
             do {
                 try ifmtCtx.readFrame(into: pkt)
             } catch let err as AVError where err == .eof {
                 break
+            } catch {
+                // Skip unreadable packets instead of crashing
+                continue
             }
             defer { pkt.unref() }
 
             if pkt.streamIndex == videoIdx {
-                try processVideoPacket(
-                    pkt, decoderCtx: decoderCtx, encoderCtx: encoderCtx,
-                    frame: frame, outStream: outVideoStream, ofmtCtx: ofmtCtx
-                )
-                // Progress
+                do {
+                    try processVideoPacket(pkt, decoderCtx: decoderCtx, encoderCtx: encoderCtx,
+                                           frame: frame, outStream: outVideoStream, ofmtCtx: ofmtCtx)
+                } catch {
+                    // Log but continue — a single bad frame shouldn't kill the conversion
+                    continue
+                }
+
                 if totalDuration > 0 {
                     let time = Double(pkt.pts) * inVideoStream.timebase.toDouble
                     let pct = min(max(time / totalDuration, 0), 1.0)
@@ -158,28 +183,35 @@ final class FFmpegVideoConverter: VideoConverting, @unchecked Sendable {
                     }
                 }
             } else if let aIdx = audioIdx, pkt.streamIndex == aIdx,
-                      let outAudio = outAudioStream,
-                      let inAudio = inAudioStream {
-                // Audio passthrough: rescale timestamps and write
-                let outIdx = outAudioStream != nil ? 1 : 0
-                pkt.streamIndex = outIdx
-                let inTb = inAudio.timebase
-                let outTb = outAudio.timebase
-                pkt.pts = AVMath.rescale(pkt.pts, inTb, outTb, rounding: .nearInf, passMinMax: true)
-                pkt.dts = AVMath.rescale(pkt.dts, inTb, outTb, rounding: .nearInf, passMinMax: true)
-                pkt.duration = AVMath.rescale(pkt.duration, inTb, outTb)
-                pkt.position = -1
-                try ofmtCtx.interleavedWriteFrame(pkt)
+                      let outAudio = outAudioStream, let inAudio = inAudioStream {
+                do {
+                    pkt.streamIndex = 1
+                    let inTb = inAudio.timebase
+                    let outTb = outAudio.timebase
+                    pkt.pts = AVMath.rescale(pkt.pts, inTb, outTb, rounding: .nearInf, passMinMax: true)
+                    pkt.dts = AVMath.rescale(pkt.dts, inTb, outTb, rounding: .nearInf, passMinMax: true)
+                    pkt.duration = AVMath.rescale(pkt.duration, inTb, outTb)
+                    pkt.position = -1
+                    try ofmtCtx.interleavedWriteFrame(pkt)
+                } catch {
+                    // Skip bad audio packets
+                    continue
+                }
             }
         }
 
-        // 10. Flush decoder and encoder
-        try flushDecoder(decoderCtx: decoderCtx, encoderCtx: encoderCtx,
-                         frame: frame, outStream: outVideoStream, ofmtCtx: ofmtCtx)
-        try flushEncoder(encoderCtx: encoderCtx, outStream: outVideoStream, ofmtCtx: ofmtCtx)
+        // 9. Flush — errors here are non-fatal, best-effort
+        do { try flushDecoder(decoderCtx: decoderCtx, encoderCtx: encoderCtx,
+                              frame: frame, outStream: outVideoStream, ofmtCtx: ofmtCtx) } catch {}
+        do { try flushEncoder(encoderCtx: encoderCtx, outStream: outVideoStream, ofmtCtx: ofmtCtx) } catch {}
 
-        // 11. Finalize
-        try ofmtCtx.writeTrailer()
+        // 10. Finalize
+        do {
+            try ofmtCtx.writeTrailer()
+        } catch {
+            throw VideoConversionError.ffmpegFailed("Cannot finalize output: \(error.localizedDescription)")
+        }
+
         progress(1.0)
     }
 
@@ -202,7 +234,6 @@ final class FFmpegVideoConverter: VideoConverting, @unchecked Sendable {
         ctx.timebase = timebase
         ctx.framerate = decoderCtx.framerate
 
-        // Pick pixel format: prefer decoder's format, fallback to common formats
         if let supported = encoder.supportedPixelFormats, !supported.isEmpty {
             if supported.contains(decoderCtx.pixelFormat) {
                 ctx.pixelFormat = decoderCtx.pixelFormat
@@ -228,61 +259,46 @@ final class FFmpegVideoConverter: VideoConverting, @unchecked Sendable {
             ctx.flags = ctx.flags.union(.globalHeader)
         }
 
-        try ctx.openCodec()
+        do {
+            try ctx.openCodec()
+        } catch {
+            throw VideoConversionError.ffmpegFailed("Cannot open encoder: \(error.localizedDescription)")
+        }
+
         return ctx
     }
 
     // MARK: - Video Processing
 
     private func processVideoPacket(
-        _ pkt: AVPacket,
-        decoderCtx: AVCodecContext,
-        encoderCtx: AVCodecContext,
-        frame: AVFrame,
-        outStream: AVStream,
-        ofmtCtx: AVFormatContext
+        _ pkt: AVPacket, decoderCtx: AVCodecContext, encoderCtx: AVCodecContext,
+        frame: AVFrame, outStream: AVStream, ofmtCtx: AVFormatContext
     ) throws {
         do { try decoderCtx.sendPacket(pkt) }
         catch let err as AVError where err == .tryAgain { return }
 
         while true {
-            do {
-                try decoderCtx.receiveFrame(frame)
-            } catch let err as AVError where err == .tryAgain || err == .eof {
-                break
-            }
+            do { try decoderCtx.receiveFrame(frame) }
+            catch let err as AVError where err == .tryAgain || err == .eof { break }
             defer { frame.unref() }
-
-            try encodeAndWrite(encoderCtx: encoderCtx, frame: frame,
-                               outStream: outStream, ofmtCtx: ofmtCtx)
+            try encodeAndWrite(encoderCtx: encoderCtx, frame: frame, outStream: outStream, ofmtCtx: ofmtCtx)
         }
     }
 
     private func encodeAndWrite(
-        encoderCtx: AVCodecContext,
-        frame: AVFrame?,
-        outStream: AVStream,
-        ofmtCtx: AVFormatContext
+        encoderCtx: AVCodecContext, frame: AVFrame?, outStream: AVStream, ofmtCtx: AVFormatContext
     ) throws {
         try encoderCtx.sendFrame(frame)
-
         let outPkt = AVPacket()
         while true {
-            do {
-                try encoderCtx.receivePacket(outPkt)
-            } catch let err as AVError where err == .tryAgain || err == .eof {
-                break
-            }
+            do { try encoderCtx.receivePacket(outPkt) }
+            catch let err as AVError where err == .tryAgain || err == .eof { break }
             defer { outPkt.unref() }
-
             outPkt.streamIndex = 0
-            outPkt.pts = AVMath.rescale(outPkt.pts, encoderCtx.timebase, outStream.timebase,
-                                        rounding: .nearInf, passMinMax: true)
-            outPkt.dts = AVMath.rescale(outPkt.dts, encoderCtx.timebase, outStream.timebase,
-                                        rounding: .nearInf, passMinMax: true)
+            outPkt.pts = AVMath.rescale(outPkt.pts, encoderCtx.timebase, outStream.timebase, rounding: .nearInf, passMinMax: true)
+            outPkt.dts = AVMath.rescale(outPkt.dts, encoderCtx.timebase, outStream.timebase, rounding: .nearInf, passMinMax: true)
             outPkt.duration = AVMath.rescale(outPkt.duration, encoderCtx.timebase, outStream.timebase)
             outPkt.position = -1
-
             try ofmtCtx.interleavedWriteFrame(outPkt)
         }
     }
@@ -290,26 +306,20 @@ final class FFmpegVideoConverter: VideoConverting, @unchecked Sendable {
     // MARK: - Flushing
 
     private func flushDecoder(
-        decoderCtx: AVCodecContext,
-        encoderCtx: AVCodecContext,
-        frame: AVFrame,
-        outStream: AVStream,
-        ofmtCtx: AVFormatContext
+        decoderCtx: AVCodecContext, encoderCtx: AVCodecContext,
+        frame: AVFrame, outStream: AVStream, ofmtCtx: AVFormatContext
     ) throws {
         try decoderCtx.sendPacket(nil)
         while true {
             do { try decoderCtx.receiveFrame(frame) }
             catch let err as AVError where err == .eof { break }
             defer { frame.unref() }
-            try encodeAndWrite(encoderCtx: encoderCtx, frame: frame,
-                               outStream: outStream, ofmtCtx: ofmtCtx)
+            try encodeAndWrite(encoderCtx: encoderCtx, frame: frame, outStream: outStream, ofmtCtx: ofmtCtx)
         }
     }
 
     private func flushEncoder(
-        encoderCtx: AVCodecContext,
-        outStream: AVStream,
-        ofmtCtx: AVFormatContext
+        encoderCtx: AVCodecContext, outStream: AVStream, ofmtCtx: AVFormatContext
     ) throws {
         try encoderCtx.sendFrame(nil)
         let outPkt = AVPacket()
@@ -317,15 +327,11 @@ final class FFmpegVideoConverter: VideoConverting, @unchecked Sendable {
             do { try encoderCtx.receivePacket(outPkt) }
             catch let err as AVError where err == .eof { break }
             defer { outPkt.unref() }
-
             outPkt.streamIndex = 0
-            outPkt.pts = AVMath.rescale(outPkt.pts, encoderCtx.timebase, outStream.timebase,
-                                        rounding: .nearInf, passMinMax: true)
-            outPkt.dts = AVMath.rescale(outPkt.dts, encoderCtx.timebase, outStream.timebase,
-                                        rounding: .nearInf, passMinMax: true)
+            outPkt.pts = AVMath.rescale(outPkt.pts, encoderCtx.timebase, outStream.timebase, rounding: .nearInf, passMinMax: true)
+            outPkt.dts = AVMath.rescale(outPkt.dts, encoderCtx.timebase, outStream.timebase, rounding: .nearInf, passMinMax: true)
             outPkt.duration = AVMath.rescale(outPkt.duration, encoderCtx.timebase, outStream.timebase)
             outPkt.position = -1
-
             try ofmtCtx.interleavedWriteFrame(outPkt)
         }
     }

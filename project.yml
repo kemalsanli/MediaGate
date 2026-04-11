@@ -60,6 +60,7 @@ targets:
     dependencies:
       - target: MediaGateKit
         embed: false
+      - package: SwiftFFmpeg
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.kemalsanli.mediagate.share-extension
@@ -70,6 +71,7 @@ targets:
         GENERATE_INFOPLIST_FILE: false
         APPLICATION_EXTENSION_API_ONLY: true
         PRODUCT_NAME: MediaGateExtension
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
 
   MediaGateKit:
     type: framework

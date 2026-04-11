@@ -15,6 +15,7 @@
 
 import Foundation
 import SwiftUI
+import MediaGateKit
 
 /// The state of a single file being converted.
 struct ConversionFileState: Identifiable, Sendable {
@@ -80,6 +81,17 @@ final class ConversionViewModel: ObservableObject {
         conversionTask = nil
         isActive = false
         FileManager.default.cleanupAllConversionTempFiles()
+    }
+
+    /// Resets all state so the view model can be reused for a new conversion.
+    func reset() {
+        cancelConversion()
+        files = []
+        currentIndex = 0
+        totalCount = 0
+        isComplete = false
+        successCount = 0
+        failCount = 0
     }
 
     // MARK: - Private

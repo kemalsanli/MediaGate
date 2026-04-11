@@ -14,6 +14,7 @@
 // MediaGate. If not, see <https://www.gnu.org/licenses/>.
 
 import SwiftUI
+import MediaGateKit
 
 /// App settings and information.
 ///
@@ -23,9 +24,16 @@ struct SettingsView: View {
 
     @Environment(\.dismiss) private var dismiss
 
+    @State private var preserveMetadata: Bool = ConversionSettings.shared.preserveMetadata
+    @State private var stripLocation: Bool = ConversionSettings.shared.stripLocation
+    @State private var videoQualityPreset: VideoQualityPreset = ConversionSettings.shared.videoQualityPreset
+    @State private var compressionQuality: Double = ConversionSettings.shared.compressionQuality
+    @State private var compressNativeFormats: Bool = ConversionSettings.shared.compressNativeFormats
+
     var body: some View {
         NavigationStack {
             List {
+                conversionSection
                 aboutSection
                 linksSection
             }
@@ -38,6 +46,56 @@ struct SettingsView: View {
                     }
                 }
             }
+        }
+    }
+
+    // MARK: - Conversion
+
+    private var conversionSection: some View {
+        Section {
+            Toggle(String(localized: "Preserve Metadata"), isOn: $preserveMetadata)
+                .onChange(of: preserveMetadata) { newValue in
+                    ConversionSettings.shared.preserveMetadata = newValue
+                }
+
+            if preserveMetadata {
+                Toggle(String(localized: "Strip Location Data"), isOn: $stripLocation)
+                    .padding(.leading, 16)
+                    .onChange(of: stripLocation) { newValue in
+                        ConversionSettings.shared.stripLocation = newValue
+                    }
+            }
+
+            Picker(String(localized: "Video Quality"), selection: $videoQualityPreset) {
+                ForEach(VideoQualityPreset.allCases) { preset in
+                    Text(preset.displayName).tag(preset)
+                }
+            }
+            .onChange(of: videoQualityPreset) { newValue in
+                ConversionSettings.shared.videoQualityPreset = newValue
+            }
+
+            VStack(alignment: .leading) {
+                HStack {
+                    Text(String(localized: "Image Quality"))
+                    Spacer()
+                    Text("\(Int(compressionQuality * 100))%")
+                        .foregroundStyle(.secondary)
+                }
+                Slider(value: $compressionQuality, in: 0.1...1.0, step: 0.05)
+                    .onChange(of: compressionQuality) { newValue in
+                        ConversionSettings.shared.compressionQuality = newValue
+                    }
+            }
+
+            Toggle(String(localized: "Compress Compatible Files"), isOn: $compressNativeFormats)
+                .onChange(of: compressNativeFormats) { newValue in
+                    ConversionSettings.shared.compressNativeFormats = newValue
+                }
+        } header: {
+            Text(String(localized: "Conversion"))
+        } footer: {
+            Text(String(localized: "Re-encode files already supported by Photos (MP4, JPEG, etc.) to reduce file size"))
         }
     }
 

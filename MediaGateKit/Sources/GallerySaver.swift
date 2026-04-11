@@ -17,7 +17,7 @@ import Foundation
 import Photos
 
 /// A type that can save media files to the user's photo library.
-protocol GallerySaving: Sendable {
+public protocol GallerySaving: Sendable {
     /// Saves a video file to the Photos library.
     ///
     /// - Parameter url: The local file URL of the video to save.
@@ -29,12 +29,13 @@ protocol GallerySaving: Sendable {
     func saveImage(url: URL) async throws
 }
 
+
 /// Errors specific to gallery saving.
-enum GallerySaveError: LocalizedError, Sendable {
+public enum GallerySaveError: LocalizedError, Sendable {
     case permissionDenied
     case saveFailed(String)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .permissionDenied:
             return "Photo library access was denied. Please grant access in Settings."
@@ -45,7 +46,9 @@ enum GallerySaveError: LocalizedError, Sendable {
 }
 
 /// Saves converted media to the user's Photos library using PhotoKit.
-struct GallerySaver: GallerySaving {
+public struct GallerySaver: GallerySaving {
+
+    public init() {}
 
     /// Requests photo library access if not already granted.
     ///
@@ -63,7 +66,7 @@ struct GallerySaver: GallerySaving {
         }
     }
 
-    func saveVideo(url: URL) async throws {
+    public func saveVideo(url: URL) async throws {
         guard await requestAccess() else {
             throw GallerySaveError.permissionDenied
         }
@@ -74,7 +77,7 @@ struct GallerySaver: GallerySaving {
         }
     }
 
-    func saveImage(url: URL) async throws {
+    public func saveImage(url: URL) async throws {
         guard await requestAccess() else {
             throw GallerySaveError.permissionDenied
         }

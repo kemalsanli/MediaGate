@@ -16,13 +16,6 @@
 import SwiftUI
 import MediaGateKit
 
-/// The main entry point for MediaGate.
-///
-/// Handles two states:
-/// - **Idle:** Shows ``HomeView`` with app info and format list.
-/// - **Converting:** Shows ``ConversionView`` when pending conversions
-///   are detected — either via the URL scheme or when the app returns
-///   to the foreground.
 @main
 struct MediaGateApp: App {
 
@@ -34,13 +27,17 @@ struct MediaGateApp: App {
         WindowGroup {
             Group {
                 if isConverting {
-                    ConversionView(viewModel: conversionViewModel)
+                    ConversionView(viewModel: conversionViewModel) {
+                        isConverting = false
+                        conversionViewModel.reset()
+                    }
                 } else {
                     HomeView()
                 }
             }
             .onOpenURL { url in
-                handleURL(url)
+                guard url.scheme == "mediagate", url.host == "convert" else { return }
+                startConversionIfNeeded()
             }
             .onChange(of: scenePhase) { newPhase in
                 if newPhase == .active {
@@ -49,19 +46,11 @@ struct MediaGateApp: App {
             }
             .onAppear {
                 FileManager.default.cleanupAllConversionTempFiles()
+                checkForPendingConversions()
             }
         }
     }
 
-    /// Handles the `mediagate://convert` URL scheme.
-    private func handleURL(_ url: URL) {
-        guard url.scheme == "mediagate", url.host == "convert" else { return }
-        startConversionIfNeeded()
-    }
-
-    /// Checks App Group UserDefaults for pending conversions queued by the
-    /// Share Extension. This is the primary handoff mechanism since the
-    /// URL scheme trick from extensions is unreliable on modern iOS.
     private func checkForPendingConversions() {
         guard SharedConstants.hasPendingConversions else { return }
         startConversionIfNeeded()

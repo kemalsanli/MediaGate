@@ -20,17 +20,25 @@ import Foundation
 /// This enum serves as the single source of truth for which file extensions
 /// are convertible, which are natively supported (passthrough), and what
 /// output format each input maps to.
-enum SupportedFormats {
+public enum SupportedFormats {
 
     /// Metadata about a supported format.
-    struct FormatInfo: Sendable, Identifiable {
-        let id: String
-        let extensions: [String]
-        let displayName: String
-        let category: Category
-        let outputExtension: String
+    public struct FormatInfo: Sendable, Identifiable {
+        public let id: String
+        public let extensions: [String]
+        public let displayName: String
+        public let category: Category
+        public let outputExtension: String
 
-        enum Category: String, Sendable, CaseIterable {
+        public init(id: String, extensions: [String], displayName: String, category: Category, outputExtension: String) {
+            self.id = id
+            self.extensions = extensions
+            self.displayName = displayName
+            self.category = category
+            self.outputExtension = outputExtension
+        }
+
+        public enum Category: String, Sendable, CaseIterable {
             case video
             case image
             case passthrough
@@ -39,9 +47,9 @@ enum SupportedFormats {
 
     // MARK: - Video Formats (→ .mp4)
 
-    static let convertibleVideos: [FormatInfo] = [
+    public static let convertibleVideos: [FormatInfo] = [
         FormatInfo(id: "mpeg",  extensions: ["mpg", "mpeg", "m2v"],   displayName: "MPEG-1/2",          category: .video, outputExtension: "mp4"),
-        FormatInfo(id: "avi",   extensions: ["avi"],                   displayName: "AVI",               category: .video, outputExtension: "mp4"),
+        FormatInfo(id: "avi",   extensions: ["avi", "divx"],           displayName: "AVI",               category: .video, outputExtension: "mp4"),
         FormatInfo(id: "wmv",   extensions: ["wmv", "asf"],            displayName: "WMV",               category: .video, outputExtension: "mp4"),
         FormatInfo(id: "flv",   extensions: ["flv", "f4v"],            displayName: "Flash Video",       category: .video, outputExtension: "mp4"),
         FormatInfo(id: "mkv",   extensions: ["mkv"],                   displayName: "Matroska",          category: .video, outputExtension: "mp4"),
@@ -55,7 +63,7 @@ enum SupportedFormats {
 
     // MARK: - Image Formats (→ .png or .jpeg)
 
-    static let convertibleImages: [FormatInfo] = [
+    public static let convertibleImages: [FormatInfo] = [
         FormatInfo(id: "bmp",   extensions: ["bmp"],                          displayName: "BMP",              category: .image, outputExtension: "png"),
         FormatInfo(id: "webp",  extensions: ["webp"],                         displayName: "WebP",             category: .image, outputExtension: "png"),
         FormatInfo(id: "tiff",  extensions: ["tiff", "tif"],                  displayName: "TIFF",             category: .image, outputExtension: "jpeg"),
@@ -63,14 +71,14 @@ enum SupportedFormats {
         FormatInfo(id: "tga",   extensions: ["tga"],                          displayName: "TGA",              category: .image, outputExtension: "png"),
         FormatInfo(id: "ico",   extensions: ["ico"],                          displayName: "ICO",              category: .image, outputExtension: "png"),
         FormatInfo(id: "psd",   extensions: ["psd"],                          displayName: "Photoshop",        category: .image, outputExtension: "png"),
-        FormatInfo(id: "raw",   extensions: ["cr2", "nef", "arw", "dng", "orf", "rw2"], displayName: "RAW Photo", category: .image, outputExtension: "jpeg"),
+        FormatInfo(id: "raw",   extensions: ["cr2", "nef", "arw", "dng", "orf", "rw2", "raf", "pef", "srw", "x3f", "3fr", "erf", "kdc", "mrw", "dcr"], displayName: "RAW Photo", category: .image, outputExtension: "jpeg"),
         FormatInfo(id: "pcx",   extensions: ["pcx"],                          displayName: "PCX",              category: .image, outputExtension: "png"),
         FormatInfo(id: "ppm",   extensions: ["ppm", "pgm", "pbm"],           displayName: "PPM/PGM/PBM",      category: .image, outputExtension: "png"),
     ]
 
     // MARK: - Passthrough Formats (already supported by Photos)
 
-    static let passthroughFormats: [FormatInfo] = [
+    public static let passthroughFormats: [FormatInfo] = [
         FormatInfo(id: "mp4",  extensions: ["mp4"],        displayName: "MP4",   category: .passthrough, outputExtension: "mp4"),
         FormatInfo(id: "mov",  extensions: ["mov"],        displayName: "MOV",   category: .passthrough, outputExtension: "mov"),
         FormatInfo(id: "m4v",  extensions: ["m4v"],        displayName: "M4V",   category: .passthrough, outputExtension: "m4v"),
@@ -83,18 +91,18 @@ enum SupportedFormats {
     ]
 
     /// All formats the app can handle (convert + passthrough).
-    static let allFormats: [FormatInfo] = convertibleVideos + convertibleImages + passthroughFormats
+    public static let allFormats: [FormatInfo] = convertibleVideos + convertibleImages + passthroughFormats
 
     /// All convertible formats (video + image, excluding passthrough).
-    static let allConvertible: [FormatInfo] = convertibleVideos + convertibleImages
+    public static let allConvertible: [FormatInfo] = convertibleVideos + convertibleImages
 
     /// A set of all file extensions that should be passed through without conversion.
-    static let passthroughExtensions: Set<String> = {
+    public static let passthroughExtensions: Set<String> = {
         Set(passthroughFormats.flatMap(\.extensions))
     }()
 
     /// A set of all file extensions that can be converted.
-    static let convertibleExtensions: Set<String> = {
+    public static let convertibleExtensions: Set<String> = {
         Set(allConvertible.flatMap(\.extensions))
     }()
 
@@ -102,7 +110,7 @@ enum SupportedFormats {
     ///
     /// - Parameter ext: The file extension (without the leading dot), case-insensitive.
     /// - Returns: The matching ``FormatInfo``, or `nil` if the extension is not recognized.
-    static func formatInfo(forExtension ext: String) -> FormatInfo? {
+    public static func formatInfo(forExtension ext: String) -> FormatInfo? {
         let lowered = ext.lowercased()
         return allFormats.first { $0.extensions.contains(lowered) }
     }

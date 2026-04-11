@@ -14,6 +14,7 @@
 // MediaGate. If not, see <https://www.gnu.org/licenses/>.
 
 import SwiftUI
+import MediaGateKit
 
 /// The main screen of MediaGate.
 ///

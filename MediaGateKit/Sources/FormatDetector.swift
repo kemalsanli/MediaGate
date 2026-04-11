@@ -17,7 +17,7 @@ import Foundation
 import UniformTypeIdentifiers
 
 /// The detected media format of a file.
-enum MediaFormat: Sendable {
+public enum MediaFormat: Sendable {
     /// A video format that needs transcoding to MP4.
     case video(SupportedFormats.FormatInfo)
 
@@ -32,7 +32,7 @@ enum MediaFormat: Sendable {
 }
 
 /// A type that can identify the media format of a file.
-protocol FormatDetecting: Sendable {
+public protocol FormatDetecting: Sendable {
     /// Inspects the file at the given URL and determines its media format.
     ///
     /// Detection uses a two-pass strategy:
@@ -47,18 +47,21 @@ protocol FormatDetecting: Sendable {
 
 /// Default implementation of ``FormatDetecting`` that combines file extension
 /// lookup with magic byte validation.
-struct FormatDetector: FormatDetecting {
+public struct FormatDetector: FormatDetecting {
 
-    func detect(fileURL: URL) -> MediaFormat {
+    public init() {}
+
+    public func detect(fileURL: URL) -> MediaFormat {
         let ext = fileURL.pathExtension.lowercased()
 
         // Step 1: Try extension-based lookup
         let extensionFormat = SupportedFormats.formatInfo(forExtension: ext)
 
-        // Step 2: Try magic bytes
+        // Step 2: Try magic bytes — match by ID first, then by extension
         let magicFormat: SupportedFormats.FormatInfo? = {
             guard let magicID = MagicBytes.identify(fileURL: fileURL) else { return nil }
             return SupportedFormats.allFormats.first { $0.id == magicID }
+                ?? SupportedFormats.formatInfo(forExtension: magicID)
         }()
 
         // Step 3: Resolve — magic bytes win on conflict

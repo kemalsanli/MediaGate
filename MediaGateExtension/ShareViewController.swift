@@ -16,23 +16,32 @@
 import UIKit
 import UniformTypeIdentifiers
 import MediaGateKit
+import SwiftFFmpeg
+
+/// Maximum file size (in bytes) for attempting video conversion in the extension.
+/// Files larger than this are queued for the main app.
+private let maxVideoSizeForExtension: UInt64 = 15_000_000 // 15 MB
+
+/// Maximum time (in seconds) to attempt a conversion in the extension.
+private let extensionConversionTimeout: TimeInterval = 20
 
 /// The Share Extension's principal class.
 ///
-/// Receives files shared from other apps, copies them to the App Group
-/// shared container, writes a ``PendingConversion`` metadata sidecar for
-/// each file, then signals the main app.
-///
-/// ## Important
-/// Share Extensions have strict memory (~120 MB) and time (~30 s) limits.
-/// This class does **not** perform any transcoding — it only copies files
-/// and hands off to the main app.
+/// **Crash-safe flow:**
+/// 1. Always copy the file to the shared container first.
+/// 2. Attempt in-extension conversion for images and small videos.
+/// 3. On success → save to Photos, remove from pending queue.
+/// 4. On failure → file remains in pending queue for the main app.
 class ShareViewController: UIViewController {
 
     private let statusLabel = UILabel()
     private let spinner = UIActivityIndicatorView(style: .large)
-    private let checkmark = UIImageView()
-    private let fileCountLabel = UILabel()
+    private let resultIcon = UIImageView()
+    private let detailLabel = UILabel()
+
+    private let formatDetector = FormatDetector()
+    private let imageConverter = NativeImageConverter()
+    private let gallerySaver = GallerySaver()
 
     // MARK: - Lifecycle
 
@@ -47,10 +56,10 @@ class ShareViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .systemBackground
 
-        let stack = UIStackView(arrangedSubviews: [spinner, checkmark, statusLabel, fileCountLabel])
+        let stack = UIStackView(arrangedSubviews: [spinner, resultIcon, statusLabel, detailLabel])
         stack.axis = .vertical
         stack.alignment = .center
-        stack.spacing = 16
+        stack.spacing = 12
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(stack)
@@ -64,42 +73,32 @@ class ShareViewController: UIViewController {
         spinner.startAnimating()
         spinner.color = .label
 
-        checkmark.image = UIImage(systemName: "checkmark.circle.fill")
-        checkmark.tintColor = .systemGreen
-        checkmark.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 48)
-        checkmark.isHidden = true
+        resultIcon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 48)
+        resultIcon.isHidden = true
 
-        statusLabel.text = NSLocalizedString("Preparing files…", comment: "")
         statusLabel.font = .preferredFont(forTextStyle: .headline)
         statusLabel.textAlignment = .center
+        statusLabel.text = NSLocalizedString("Processing…", comment: "")
 
-        fileCountLabel.font = .preferredFont(forTextStyle: .subheadline)
-        fileCountLabel.textColor = .secondaryLabel
-        fileCountLabel.textAlignment = .center
-        fileCountLabel.isHidden = true
+        detailLabel.font = .preferredFont(forTextStyle: .subheadline)
+        detailLabel.textColor = .secondaryLabel
+        detailLabel.textAlignment = .center
+        detailLabel.numberOfLines = 0
+        detailLabel.isHidden = true
     }
 
     @MainActor
-    private func showSuccess(fileCount: Int) {
+    private func showResult(icon: String, color: UIColor, title: String, detail: String?) {
         spinner.stopAnimating()
         spinner.isHidden = true
-        checkmark.isHidden = false
-        statusLabel.text = NSLocalizedString("Ready to convert!", comment: "")
-        fileCountLabel.text = String.localizedStringWithFormat(
-            NSLocalizedString("%d file(s) queued", comment: ""),
-            fileCount
-        )
-        fileCountLabel.isHidden = false
-    }
-
-    @MainActor
-    private func showError(_ message: String) {
-        spinner.stopAnimating()
-        spinner.isHidden = true
-        checkmark.image = UIImage(systemName: "xmark.circle.fill")
-        checkmark.tintColor = .systemRed
-        checkmark.isHidden = false
-        statusLabel.text = message
+        resultIcon.image = UIImage(systemName: icon)
+        resultIcon.tintColor = color
+        resultIcon.isHidden = false
+        statusLabel.text = title
+        if let detail {
+            detailLabel.text = detail
+            detailLabel.isHidden = false
+        }
     }
 
     // MARK: - Processing
@@ -122,7 +121,7 @@ class ShareViewController: UIViewController {
 
         guard !providers.isEmpty else {
             Task { @MainActor in
-                showError(NSLocalizedString("No supported files found.", comment: ""))
+                showResult(icon: "questionmark.circle", color: .systemGray, title: "No supported files", detail: nil)
                 try? await Task.sleep(for: .seconds(1.5))
                 completeRequest()
             }
@@ -130,89 +129,80 @@ class ShareViewController: UIViewController {
         }
 
         Task {
-            let count = await processProviders(providers)
+            var savedCount = 0
+            var queuedCount = 0
 
-            if count > 0 {
-                // Signal the main app that there are pending conversions
-                SharedConstants.hasPendingConversions = true
+            for (i, provider) in providers.enumerated() {
+                await MainActor.run {
+                    statusLabel.text = String.localizedStringWithFormat(
+                        NSLocalizedString("Processing %d of %d…", comment: ""), i + 1, providers.count
+                    )
+                }
 
-                await showSuccess(fileCount: count)
+                do {
+                    let (tempURL, typeHint) = try await loadFileURL(from: provider)
 
-                // Try to open the main app via URL scheme (best-effort)
-                await openMainApp()
+                    // Step 1: ALWAYS save to shared container first (crash-safe)
+                    let pending = try saveToSharedContainer(sourceURL: tempURL, typeHint: typeHint)
 
-                // Brief pause so the user sees the confirmation
+                    // Step 2: Try in-extension conversion
+                    let converted = await attemptConversion(pending: pending)
+
+                    if converted {
+                        savedCount += 1
+                    } else {
+                        queuedCount += 1
+                    }
+                } catch {
+                    queuedCount += 1
+                    print("[ShareExt] Error: \(error.localizedDescription)")
+                }
+            }
+
+            // Show result
+            if queuedCount == 0 && savedCount > 0 {
+                // Everything converted and saved — done!
+                await showResult(
+                    icon: "checkmark.circle.fill", color: .systemGreen,
+                    title: NSLocalizedString("Saved to Photos!", comment: ""),
+                    detail: savedCount > 1 ? "\(savedCount) files" : nil
+                )
                 try? await Task.sleep(for: .seconds(1.2))
-            } else {
-                await showError(NSLocalizedString("Could not process files.", comment: ""))
-                try? await Task.sleep(for: .seconds(1.5))
+            } else if queuedCount > 0 {
+                // Some/all files need the main app
+                SharedConstants.hasPendingConversions = true
+                await showResult(
+                    icon: "arrow.triangle.2.circlepath", color: .systemOrange,
+                    title: NSLocalizedString("Open MediaGate to convert", comment: ""),
+                    detail: NSLocalizedString("File is too large to convert here", comment: "")
+                )
+                await openMainApp()
+                try? await Task.sleep(for: .seconds(2.0))
             }
 
             completeRequest()
         }
     }
 
-    /// Copies each received file to the shared container and writes metadata.
-    ///
-    /// - Returns: The number of files successfully queued.
-    private func processProviders(_ providers: [NSItemProvider]) async -> Int {
-        var successCount = 0
+    // MARK: - File Loading
 
-        for (index, provider) in providers.enumerated() {
-            await MainActor.run {
-                fileCountLabel.text = String.localizedStringWithFormat(
-                    NSLocalizedString("Processing %d of %d…", comment: ""),
-                    index + 1, providers.count
-                )
-                fileCountLabel.isHidden = false
-            }
-
-            do {
-                let (url, typeHint) = try await loadFileURL(from: provider)
-                try copyToSharedContainer(sourceURL: url, typeHint: typeHint)
-                successCount += 1
-            } catch {
-                print("ShareExtension: Failed to process item — \(error.localizedDescription)")
-            }
-        }
-
-        return successCount
-    }
-
-    /// Loads the file URL from an NSItemProvider.
-    ///
-    /// Tries multiple type identifiers in order: data (broadest), then image,
-    /// movie, and item as fallbacks.
     private func loadFileURL(from provider: NSItemProvider) async throws -> (URL, String?) {
         let typeHint = provider.registeredTypeIdentifiers.first
-
         let typeIdentifiers = [
-            UTType.data.identifier,
-            UTType.image.identifier,
-            UTType.movie.identifier,
-            UTType.item.identifier,
+            UTType.data.identifier, UTType.image.identifier,
+            UTType.movie.identifier, UTType.item.identifier,
         ]
-
-        // Find the first type identifier the provider supports
         guard let typeID = typeIdentifiers.first(where: { provider.hasItemConformingToTypeIdentifier($0) }) else {
             throw ShareError.noFileURL
         }
 
         return try await withCheckedThrowingContinuation { continuation in
             provider.loadFileRepresentation(forTypeIdentifier: typeID) { url, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                guard let url = url else {
-                    continuation.resume(throwing: ShareError.noFileURL)
-                    return
-                }
+                if let error { continuation.resume(throwing: error); return }
+                guard let url else { continuation.resume(throwing: ShareError.noFileURL); return }
 
-                // The provided URL is only valid during this callback — copy it
                 let tempURL = FileManager.default.temporaryDirectory
                     .appendingPathComponent(UUID().uuidString + "_" + url.lastPathComponent)
-
                 do {
                     try FileManager.default.copyItem(at: url, to: tempURL)
                     continuation.resume(returning: (tempURL, typeHint))
@@ -223,16 +213,15 @@ class ShareViewController: UIViewController {
         }
     }
 
-    /// Copies the file to the App Group shared container and writes metadata.
-    private func copyToSharedContainer(sourceURL: URL, typeHint: String?) throws {
+    // MARK: - Shared Container (crash-safe backup)
+
+    private func saveToSharedContainer(sourceURL: URL, typeHint: String?) throws -> PendingConversion {
         guard let pendingDir = SharedConstants.pendingDirectoryURL else {
             throw ShareError.sharedContainerUnavailable
         }
-
         let originalFilename = sourceURL.lastPathComponent
         let storedFilename = "\(UUID().uuidString)_\(originalFilename)"
         let destinationURL = pendingDir.appendingPathComponent(storedFilename)
-
         try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
 
         let pending = PendingConversion(
@@ -241,52 +230,273 @@ class ShareViewController: UIViewController {
             storedFilename: storedFilename
         )
         try pending.writeToPendingDirectory()
-
-        // Clean up the temp copy
         try? FileManager.default.removeItem(at: sourceURL)
+        return pending
+    }
+
+    // MARK: - In-Extension Conversion
+
+    /// Attempts to convert and save the file directly in the extension.
+    ///
+    /// - Returns: `true` if successfully saved to Photos, `false` if queued for main app.
+    private func attemptConversion(pending: PendingConversion) async -> Bool {
+        guard let pendingDir = SharedConstants.pendingDirectoryURL else { return false }
+        let sourceURL = pendingDir.appendingPathComponent(pending.storedFilename)
+        let format = formatDetector.detect(fileURL: sourceURL)
+
+        do {
+            switch format {
+            case .nativelySupported:
+                let ext = sourceURL.pathExtension.lowercased()
+                let videoExts: Set<String> = ["mp4", "mov", "m4v", "hevc"]
+                if videoExts.contains(ext) {
+                    try await gallerySaver.saveVideo(url: sourceURL)
+                } else {
+                    try await gallerySaver.saveImage(url: sourceURL)
+                }
+                cleanupPending(pending)
+                return true
+
+            case .image:
+                let tempDir = try FileManager.default.createConversionTempDirectory(jobID: pending.id.uuidString)
+                let outputs = try await imageConverter.convert(input: sourceURL, outputDir: tempDir)
+                for url in outputs {
+                    try await gallerySaver.saveImage(url: url)
+                }
+                FileManager.default.cleanupConversionTempDirectory(jobID: pending.id.uuidString)
+                cleanupPending(pending)
+                return true
+
+            case .video:
+                let fileSize = FileManager.default.fileSize(at: sourceURL)
+                guard fileSize > 0 && fileSize <= maxVideoSizeForExtension else { return false }
+
+                // Try video conversion with a timeout
+                return await convertSmallVideo(pending: pending, sourceURL: sourceURL)
+
+            case .unsupported:
+                return false
+            }
+        } catch {
+            print("[ShareExt] Conversion failed, queued for main app: \(error.localizedDescription)")
+            return false
+        }
+    }
+
+    /// Attempts to convert a small video file within the extension's time/memory limits.
+    private func convertSmallVideo(pending: PendingConversion, sourceURL: URL) async -> Bool {
+        do {
+            let tempDir = try FileManager.default.createConversionTempDirectory(jobID: pending.id.uuidString)
+            let outputURL = tempDir.appendingPathComponent(
+                sourceURL.deletingPathExtension().lastPathComponent + ".mp4"
+            )
+
+            // Run with timeout
+            let success = try await withThrowingTaskGroup(of: Bool.self) { group in
+                group.addTask {
+                    try self.transcodeVideo(input: sourceURL, output: outputURL)
+                    return true
+                }
+                group.addTask {
+                    try await Task.sleep(for: .seconds(extensionConversionTimeout))
+                    throw ShareError.timeout
+                }
+
+                let result = try await group.next() ?? false
+                group.cancelAll()
+                return result
+            }
+
+            if success {
+                try await gallerySaver.saveVideo(url: outputURL)
+                FileManager.default.cleanupConversionTempDirectory(jobID: pending.id.uuidString)
+                cleanupPending(pending)
+                return true
+            }
+            return false
+        } catch {
+            print("[ShareExt] Video conversion timed out or failed: \(error.localizedDescription)")
+            FileManager.default.cleanupConversionTempDirectory(jobID: pending.id.uuidString)
+            return false
+        }
+    }
+
+    /// Lightweight video transcode using SwiftFFmpeg — no progress reporting,
+    /// just input→decode→encode→output as fast as possible.
+    nonisolated private func transcodeVideo(input: URL, output: URL) throws {
+        let ifmtCtx = try AVFormatContext(url: input.path)
+        try ifmtCtx.findStreamInfo()
+
+        guard let videoIdx = ifmtCtx.findBestStream(type: .video) else { return }
+        let audioIdx = ifmtCtx.findBestStream(type: .audio)
+        let inVideoStream = ifmtCtx.streams[videoIdx]
+        let inAudioStream = audioIdx.map { ifmtCtx.streams[$0] }
+
+        // Decoder
+        guard let decoder = AVCodec.findDecoderById(inVideoStream.codecParameters.codecId) else { return }
+        let decoderCtx = AVCodecContext(codec: decoder)
+        decoderCtx.setParameters(inVideoStream.codecParameters)
+        try decoderCtx.openCodec()
+
+        // Encoder
+        guard let encoder = AVCodec.findEncoderByName("h264_videotoolbox")
+                ?? AVCodec.findEncoderById(.H264) else { return }
+        let encoderCtx = AVCodecContext(codec: encoder)
+        encoderCtx.width = decoderCtx.width
+        encoderCtx.height = decoderCtx.height
+        encoderCtx.timebase = inVideoStream.timebase
+        encoderCtx.framerate = decoderCtx.framerate
+        encoderCtx.bitRate = 0
+
+        if let supported = encoder.supportedPixelFormats, !supported.isEmpty {
+            encoderCtx.pixelFormat = supported.contains(decoderCtx.pixelFormat)
+                ? decoderCtx.pixelFormat
+                : (supported.contains(.NV12) ? .NV12 : supported[0])
+        } else {
+            encoderCtx.pixelFormat = .YUV420P
+        }
+
+        // Output
+        let ofmtCtx = try AVFormatContext(format: nil, filename: output.path)
+        if ofmtCtx.outputFormat!.flags.contains(.globalHeader) {
+            encoderCtx.flags = encoderCtx.flags.union(.globalHeader)
+        }
+        try encoderCtx.openCodec()
+
+        guard let outVideoStream = ofmtCtx.addStream() else { return }
+        outVideoStream.codecParameters.copy(from: encoderCtx)
+        outVideoStream.timebase = encoderCtx.timebase
+
+        // Audio passthrough
+        let mp4AudioCodecs: Set<AVCodecID> = [.AAC, .MP3, .FLAC]
+        var outAudioStream: AVStream?
+        if let inAudio = inAudioStream, mp4AudioCodecs.contains(inAudio.codecParameters.codecId) {
+            if let stream = ofmtCtx.addStream() {
+                stream.codecParameters.copy(from: inAudio.codecParameters)
+                stream.codecParameters.codecTag = 0
+                stream.timebase = inAudio.timebase
+                outAudioStream = stream
+            }
+        }
+
+        if !ofmtCtx.outputFormat!.flags.contains(.noFile) {
+            try ofmtCtx.openOutput(url: output.path, flags: .write)
+        }
+        try ofmtCtx.writeHeader()
+
+        // Transcode loop
+        let pkt = AVPacket()
+        let frame = AVFrame()
+
+        while true {
+            do { try ifmtCtx.readFrame(into: pkt) }
+            catch let err as AVError where err == .eof { break }
+            defer { pkt.unref() }
+
+            if pkt.streamIndex == videoIdx {
+                do { try decoderCtx.sendPacket(pkt) } catch { continue }
+                while true {
+                    do { try decoderCtx.receiveFrame(frame) }
+                    catch { break }
+                    defer { frame.unref() }
+
+                    try encoderCtx.sendFrame(frame)
+                    let outPkt = AVPacket()
+                    while true {
+                        do { try encoderCtx.receivePacket(outPkt) } catch { break }
+                        defer { outPkt.unref() }
+                        outPkt.streamIndex = 0
+                        outPkt.pts = AVMath.rescale(outPkt.pts, encoderCtx.timebase, outVideoStream.timebase, rounding: .nearInf, passMinMax: true)
+                        outPkt.dts = AVMath.rescale(outPkt.dts, encoderCtx.timebase, outVideoStream.timebase, rounding: .nearInf, passMinMax: true)
+                        outPkt.duration = AVMath.rescale(outPkt.duration, encoderCtx.timebase, outVideoStream.timebase)
+                        outPkt.position = -1
+                        try ofmtCtx.interleavedWriteFrame(outPkt)
+                    }
+                }
+            } else if let aIdx = audioIdx, pkt.streamIndex == aIdx,
+                      let outAudio = outAudioStream, let inAudio = inAudioStream {
+                pkt.streamIndex = outAudioStream != nil ? 1 : 0
+                pkt.pts = AVMath.rescale(pkt.pts, inAudio.timebase, outAudio.timebase, rounding: .nearInf, passMinMax: true)
+                pkt.dts = AVMath.rescale(pkt.dts, inAudio.timebase, outAudio.timebase, rounding: .nearInf, passMinMax: true)
+                pkt.duration = AVMath.rescale(pkt.duration, inAudio.timebase, outAudio.timebase)
+                pkt.position = -1
+                try ofmtCtx.interleavedWriteFrame(pkt)
+            }
+
+            try Task.checkCancellation()
+        }
+
+        // Flush
+        try decoderCtx.sendPacket(nil)
+        while true {
+            do { try decoderCtx.receiveFrame(frame) } catch { break }
+            defer { frame.unref() }
+            try encoderCtx.sendFrame(frame)
+            let outPkt = AVPacket()
+            while true {
+                do { try encoderCtx.receivePacket(outPkt) } catch { break }
+                defer { outPkt.unref() }
+                outPkt.streamIndex = 0
+                outPkt.pts = AVMath.rescale(outPkt.pts, encoderCtx.timebase, outVideoStream.timebase, rounding: .nearInf, passMinMax: true)
+                outPkt.dts = AVMath.rescale(outPkt.dts, encoderCtx.timebase, outVideoStream.timebase, rounding: .nearInf, passMinMax: true)
+                outPkt.duration = AVMath.rescale(outPkt.duration, encoderCtx.timebase, outVideoStream.timebase)
+                outPkt.position = -1
+                try ofmtCtx.interleavedWriteFrame(outPkt)
+            }
+        }
+
+        try encoderCtx.sendFrame(nil)
+        let flushPkt = AVPacket()
+        while true {
+            do { try encoderCtx.receivePacket(flushPkt) } catch { break }
+            defer { flushPkt.unref() }
+            flushPkt.streamIndex = 0
+            flushPkt.pts = AVMath.rescale(flushPkt.pts, encoderCtx.timebase, outVideoStream.timebase, rounding: .nearInf, passMinMax: true)
+            flushPkt.dts = AVMath.rescale(flushPkt.dts, encoderCtx.timebase, outVideoStream.timebase, rounding: .nearInf, passMinMax: true)
+            flushPkt.duration = AVMath.rescale(flushPkt.duration, encoderCtx.timebase, outVideoStream.timebase)
+            flushPkt.position = -1
+            try ofmtCtx.interleavedWriteFrame(flushPkt)
+        }
+
+        try ofmtCtx.writeTrailer()
+    }
+
+    // MARK: - Cleanup
+
+    private func cleanupPending(_ job: PendingConversion) {
+        guard let dir = SharedConstants.pendingDirectoryURL else { return }
+        try? FileManager.default.removeItem(at: dir.appendingPathComponent(job.metadataFilename))
+        try? FileManager.default.removeItem(at: dir.appendingPathComponent(job.storedFilename))
     }
 
     // MARK: - Open Main App
 
-    /// Best-effort attempt to open the main app via the URL scheme.
-    ///
-    /// This uses the responder chain trick which may not work on all iOS
-    /// versions. The main app also checks for pending items on foreground,
-    /// so conversion will start even if this fails.
     @MainActor
     private func openMainApp() async {
         guard let url = URL(string: "mediagate://convert") else { return }
-
         let selector = sel_registerName("openURL:")
         var responder: UIResponder? = self
         while let r = responder {
-            if r.responds(to: selector) {
-                r.perform(selector, with: url)
-                return
-            }
+            if r.responds(to: selector) { r.perform(selector, with: url); return }
             responder = r.next
         }
     }
-
-    // MARK: - Completion
 
     private func completeRequest() {
         extensionContext?.completeRequest(returningItems: nil)
     }
 }
 
-// MARK: - Errors
-
 private enum ShareError: LocalizedError {
     case noFileURL
     case sharedContainerUnavailable
+    case timeout
 
     var errorDescription: String? {
         switch self {
-        case .noFileURL:
-            return "No file URL was provided by the host app."
-        case .sharedContainerUnavailable:
-            return "Could not access the shared App Group container."
+        case .noFileURL: return "No file URL was provided."
+        case .sharedContainerUnavailable: return "Shared container not available."
+        case .timeout: return "Conversion timed out."
         }
     }
 }

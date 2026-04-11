@@ -20,14 +20,14 @@ import Foundation
 ///
 /// When a file extension is missing or misleading, magic bytes provide
 /// a reliable way to determine the actual format.
-enum MagicBytes {
+public enum MagicBytes {
 
     /// A single signature entry: the byte pattern and its offset from file start.
-    struct Signature: Sendable {
-        let bytes: [UInt8]
-        let offset: Int
+    public struct Signature: Sendable {
+        public let bytes: [UInt8]
+        public let offset: Int
 
-        init(_ bytes: [UInt8], offset: Int = 0) {
+        public init(_ bytes: [UInt8], offset: Int = 0) {
             self.bytes = bytes
             self.offset = offset
         }
@@ -37,7 +37,7 @@ enum MagicBytes {
     ///
     /// The key is a human-readable format name that aligns with
     /// ``SupportedFormats/FormatInfo/identifier``.
-    static let signatures: [(format: String, signature: Signature)] = [
+    public static let signatures: [(format: String, signature: Signature)] = [
         // Video formats
         ("avi",   Signature([0x52, 0x49, 0x46, 0x46])),           // RIFF
         ("flv",   Signature([0x46, 0x4C, 0x56])),                 // FLV
@@ -87,7 +87,7 @@ enum MagicBytes {
     ///
     /// - Parameter url: The file URL to inspect.
     /// - Returns: The format identifier string, or `nil` if no match is found.
-    static func identify(fileURL url: URL) -> String? {
+    public static func identify(fileURL url: URL) -> String? {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
         defer { try? handle.close() }
 
