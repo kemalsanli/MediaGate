@@ -51,4 +51,16 @@ public enum SharedConstants {
         try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         return url
     }
+
+    /// Shared UserDefaults backed by the App Group container.
+    public static var sharedDefaults: UserDefaults? {
+        UserDefaults(suiteName: appGroupIdentifier)
+    }
+
+    /// Flag set by the Share Extension to signal that there are files
+    /// waiting to be converted. The main app clears this after processing.
+    public static var hasPendingConversions: Bool {
+        get { sharedDefaults?.bool(forKey: "hasPendingConversions") ?? false }
+        set { sharedDefaults?.set(newValue, forKey: "hasPendingConversions") }
+    }
 }
