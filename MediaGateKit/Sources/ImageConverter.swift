@@ -85,13 +85,27 @@ public final class NativeImageConverter: ImageConverting, @unchecked Sendable {
 
     // MARK: - ImageIO (BMP, WebP, TIFF, TGA, ICO, RAW, PCX)
 
+    /// All RAW photo extensions for detection.
+    private static let rawExtensions: Set<String> = [
+        "cr2", "nef", "arw", "dng", "orf", "rw2", "raf", "pef",
+        "srw", "x3f", "3fr", "erf", "kdc", "mrw", "dcr"
+    ]
+
     /// Converts images using ImageIO. Handles single and multi-page images.
     private func convertWithImageIO(input: URL, outputDir: URL) throws -> [URL] {
+        let ext = input.pathExtension.lowercased()
+        let isRAW = Self.rawExtensions.contains(ext)
+
+        // RAW photos: use CoreImage pipeline
+        if isRAW {
+            return try [processRAW(input: input, outputDir: outputDir)]
+        }
+
         guard let source = CGImageSourceCreateWithURL(input as CFURL, nil) else {
             throw ImageConversionError.failedToCreateImageSource
         }
 
-        let format = SupportedFormats.formatInfo(forExtension: input.pathExtension.lowercased())
+        let format = SupportedFormats.formatInfo(forExtension: ext)
         let outputExt = format?.outputExtension ?? "png"
         let outputType = outputExt == "jpeg" ? UTType.jpeg : UTType.png
         let pageCount = CGImageSourceGetCount(source)
@@ -100,18 +114,7 @@ public final class NativeImageConverter: ImageConverting, @unchecked Sendable {
         var outputURLs: [URL] = []
 
         for i in 0..<pageCount {
-            // For RAW photos, use CoreImage's RAW processing
-            let ext = input.pathExtension.lowercased()
-            let isRAW = ["cr2", "nef", "arw", "dng", "orf", "rw2"].contains(ext)
-
-            let cgImage: CGImage?
-            if isRAW {
-                cgImage = try processRAW(source: source, index: i)
-            } else {
-                cgImage = CGImageSourceCreateImageAtIndex(source, i, nil)
-            }
-
-            guard let image = cgImage else {
+            guard let image = CGImageSourceCreateImageAtIndex(source, i, nil) else {
                 throw ImageConversionError.failedToReadImage
             }
 
@@ -139,29 +142,43 @@ public final class NativeImageConverter: ImageConverting, @unchecked Sendable {
         return outputURLs
     }
 
-    /// Processes a RAW photo using CoreImage's RAW filter.
-    private func processRAW(source: CGImageSource, index: Int) throws -> CGImage {
-        guard let filter = CIFilter(
-            imageURL: URL(string: "")!, // Placeholder — actual URL passed at call site
-            options: [:]
-        ) else {
-            // Fallback: try to read as a regular image
-            guard let image = CGImageSourceCreateImageAtIndex(source, index, nil) else {
-                throw ImageConversionError.failedToReadImage
-            }
-            return image
+    /// Processes a RAW photo using CoreImage with the actual file URL.
+    private func processRAW(input: URL, outputDir: URL) throws -> URL {
+        let ciImage: CIImage?
+
+        // Try CIRAWFilter (iOS 15+) first, then CIFilter, then CIImage direct
+        if let rawFilter = CIRAWFilter(imageURL: input) {
+            ciImage = rawFilter.outputImage
+        } else if let filter = CIFilter(imageURL: input, options: [:]) {
+            ciImage = filter.outputImage
+        } else {
+            ciImage = CIImage(contentsOf: input)
         }
 
-        guard let ciImage = filter.outputImage else {
+        guard let image = ciImage else {
             throw ImageConversionError.failedToReadImage
         }
 
         let context = CIContext()
-        guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
-            throw ImageConversionError.failedToReadImage
+        let baseName = input.deletingPathExtension().lastPathComponent
+        let outputURL = outputDir.appendingPathComponent("\(baseName).jpeg")
+
+        guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) else {
+            throw ImageConversionError.failedToWriteImage
         }
 
-        return cgImage
+        do {
+            try context.writeJPEGRepresentation(
+                of: image,
+                to: outputURL,
+                colorSpace: colorSpace,
+                options: [:]
+            )
+        } catch {
+            throw ImageConversionError.failedToWriteImage
+        }
+
+        return outputURL
     }
 
     // MARK: - SVG (WKWebView snapshot)
