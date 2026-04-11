@@ -143,11 +143,19 @@ public final class NativeImageConverter: ImageConverting, @unchecked Sendable {
     }
 
     /// Processes a RAW photo using CoreImage with the actual file URL.
+    ///
+    /// Uses CIRAWFilter → CIFilter → CIImage fallback chain, then renders
+    /// through CGImage → UIImage → JPEG for proper tone mapping and color
+    /// space conversion. Direct CIContext.writeJPEGRepresentation can produce
+    /// broken output from RAW files due to HDR/linear color space issues.
     private func processRAW(input: URL, outputDir: URL) throws -> URL {
         let ciImage: CIImage?
 
-        // Try CIRAWFilter (iOS 15+) first, then CIFilter, then CIImage direct
+        // Try CIRAWFilter (iOS 15+) first for best RAW rendering
         if let rawFilter = CIRAWFilter(imageURL: input) {
+            // Apply default auto-adjustments for proper exposure/tone
+            rawFilter.boostAmount = 1.0
+            rawFilter.isGamutMappingEnabled = true
             ciImage = rawFilter.outputImage
         } else if let filter = CIFilter(imageURL: input, options: [:]) {
             ciImage = filter.outputImage
@@ -159,22 +167,32 @@ public final class NativeImageConverter: ImageConverting, @unchecked Sendable {
             throw ImageConversionError.failedToReadImage
         }
 
-        let context = CIContext()
-        let baseName = input.deletingPathExtension().lastPathComponent
-        let outputURL = outputDir.appendingPathComponent("\(baseName).jpeg")
+        // Render CIImage → CGImage → UIImage → JPEG
+        // This pipeline properly handles tone mapping, color space conversion,
+        // and HDR→SDR clamping that writeJPEGRepresentation misses.
+        let context = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!])
 
-        guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) else {
+        guard let cgImage = context.createCGImage(
+            image,
+            from: image.extent,
+            format: .RGBA8,
+            colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!
+        ) else {
+            throw ImageConversionError.failedToReadImage
+        }
+
+        let uiImage = UIImage(cgImage: cgImage)
+        let quality = ConversionSettings.shared.compressionQuality
+
+        guard let jpegData = uiImage.jpegData(compressionQuality: quality) else {
             throw ImageConversionError.failedToWriteImage
         }
 
-        do {
-            try context.writeJPEGRepresentation(
-                of: image,
-                to: outputURL,
-                colorSpace: colorSpace,
-                options: [:]
-            )
-        } catch {
+        let baseName = input.deletingPathExtension().lastPathComponent
+        let outputURL = outputDir.appendingPathComponent("\(baseName).jpeg")
+        try jpegData.write(to: outputURL, options: .atomic)
+
+        guard jpegData.count > 0 else {
             throw ImageConversionError.failedToWriteImage
         }
 
