@@ -14,6 +14,7 @@
 // MediaGate. If not, see <https://www.gnu.org/licenses/>.
 
 import SwiftUI
+import Photos
 import MediaGateKit
 
 /// The main screen of MediaGate.
@@ -55,6 +56,13 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showTipJar) {
                 TipJarView()
+            }
+            .task {
+                // Request Photos permission early so it's ready when needed
+                let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+                if status == .notDetermined {
+                    await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+                }
             }
         }
     }

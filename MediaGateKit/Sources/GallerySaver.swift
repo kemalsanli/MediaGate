@@ -18,29 +18,24 @@ import Photos
 
 /// A type that can save media files to the user's photo library.
 public protocol GallerySaving: Sendable {
-    /// Saves a video file to the Photos library.
-    ///
-    /// - Parameter url: The local file URL of the video to save.
     func saveVideo(url: URL) async throws
-
-    /// Saves an image file to the Photos library.
-    ///
-    /// - Parameter url: The local file URL of the image to save.
     func saveImage(url: URL) async throws
 }
-
 
 /// Errors specific to gallery saving.
 public enum GallerySaveError: LocalizedError, Sendable {
     case permissionDenied
     case saveFailed(String)
+    case fileInvalid(String)
 
     public var errorDescription: String? {
         switch self {
         case .permissionDenied:
-            return "Photo library access was denied. Please grant access in Settings."
+            return "Photo library access was denied. Please grant access in Settings → Privacy → Photos."
         case .saveFailed(let reason):
             return "Failed to save to Photos: \(reason)"
+        case .fileInvalid(let name):
+            return "Converted file is invalid or empty: \(name)"
         }
     }
 }
@@ -50,41 +45,62 @@ public struct GallerySaver: GallerySaving {
 
     public init() {}
 
-    /// Requests photo library access if not already granted.
-    ///
-    /// - Returns: `true` if access is authorized.
-    private func requestAccess() async -> Bool {
-        let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
-        switch status {
-        case .authorized, .limited:
-            return true
-        case .notDetermined:
-            let newStatus = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-            return newStatus == .authorized || newStatus == .limited
-        default:
-            return false
-        }
-    }
-
     public func saveVideo(url: URL) async throws {
-        guard await requestAccess() else {
-            throw GallerySaveError.permissionDenied
-        }
+        try validateFile(at: url)
+        try await ensureAccess()
 
-        try await PHPhotoLibrary.shared().performChanges {
-            let request = PHAssetCreationRequest.forAsset()
-            request.addResource(with: .video, fileURL: url, options: nil)
+        do {
+            try await PHPhotoLibrary.shared().performChanges {
+                let options = PHAssetResourceCreationOptions()
+                options.shouldMoveFile = false
+                let request = PHAssetCreationRequest.forAsset()
+                request.addResource(with: .video, fileURL: url, options: options)
+            }
+        } catch {
+            throw GallerySaveError.saveFailed(error.localizedDescription)
         }
     }
 
     public func saveImage(url: URL) async throws {
-        guard await requestAccess() else {
-            throw GallerySaveError.permissionDenied
-        }
+        try validateFile(at: url)
+        try await ensureAccess()
 
-        try await PHPhotoLibrary.shared().performChanges {
-            let request = PHAssetCreationRequest.forAsset()
-            request.addResource(with: .photo, fileURL: url, options: nil)
+        do {
+            try await PHPhotoLibrary.shared().performChanges {
+                let options = PHAssetResourceCreationOptions()
+                options.shouldMoveFile = false
+                let request = PHAssetCreationRequest.forAsset()
+                request.addResource(with: .photo, fileURL: url, options: options)
+            }
+        } catch {
+            throw GallerySaveError.saveFailed(error.localizedDescription)
+        }
+    }
+
+    // MARK: - Private
+
+    private func validateFile(at url: URL) throws {
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw GallerySaveError.fileInvalid(url.lastPathComponent)
+        }
+        let size = FileManager.default.fileSize(at: url)
+        guard size > 0 else {
+            throw GallerySaveError.fileInvalid("\(url.lastPathComponent) (0 bytes)")
+        }
+    }
+
+    private func ensureAccess() async throws {
+        let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+        switch status {
+        case .authorized, .limited:
+            return
+        case .notDetermined:
+            let newStatus = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+            guard newStatus == .authorized || newStatus == .limited else {
+                throw GallerySaveError.permissionDenied
+            }
+        default:
+            throw GallerySaveError.permissionDenied
         }
     }
 }
