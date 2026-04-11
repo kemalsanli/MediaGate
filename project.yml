@@ -17,7 +17,7 @@ settings:
 
 packages:
   SwiftFFmpeg:
-    url: https://github.com/tylerjonesio/SwiftFFmpeg.git
+    url: https://github.com/kemalsanli/SwiftFFmpeg.git
     branch: master
 
 targets:
