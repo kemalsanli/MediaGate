@@ -1,13 +1,10 @@
 name: Build & Test
 
 on:
-  workflow_dispatch:
-  # Disabled until GitHub runners support Swift 6.2+ (Xcode 26+)
-  # ffmpeg-libav-spm requires swift-tools-version 6.2
-  # push:
-  #   branches: [main]
-  # pull_request:
-  #   branches: [main]
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
