@@ -21,12 +21,18 @@ enum TipProduct: String, CaseIterable, Sendable {
     case small  = "com.kemalsanli.mediagate.tip.small"
     case medium = "com.kemalsanli.mediagate.tip.medium"
     case large  = "com.kemalsanli.mediagate.tip.large"
+    case huge   = "com.kemalsanli.mediagate.tip.huge"
+    case mega   = "com.kemalsanli.mediagate.tip.mega"
+    case ultra  = "com.kemalsanli.mediagate.tip.ultra"
 
     var displayName: String {
         switch self {
         case .small:  return String(localized: "Small Tip")
         case .medium: return String(localized: "Medium Tip")
         case .large:  return String(localized: "Big Tip")
+        case .huge:   return String(localized: "Huge Tip")
+        case .mega:   return String(localized: "Mega Tip")
+        case .ultra:  return String(localized: "Ultra Tip")
         }
     }
 
@@ -35,6 +41,9 @@ enum TipProduct: String, CaseIterable, Sendable {
         case .small:  return "☕"
         case .medium: return "🍕"
         case .large:  return "🎉"
+        case .huge:   return "🚀"
+        case .mega:   return "💎"
+        case .ultra:  return "👑"
         }
     }
 }
