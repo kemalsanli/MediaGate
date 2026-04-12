@@ -10,7 +10,7 @@ Share an MKV, AVI, BMP, SVG, or any other unsupported format from any app. Media
 
 ## Features
 
-- **Share Extension + Action Extension** ��� appears in both the app row and actions list
+- **Share Extension + Action Extension** — appears in both the app row and actions list
 - **30+ input formats** — video, image, and RAW photo support
 - **Hardware-accelerated** — H.264 encoding via VideoToolbox
 - **On-device only** — no data leaves your phone
