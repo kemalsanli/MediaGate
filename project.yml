@@ -44,6 +44,7 @@ targets:
           copyFiles:
             destination: plugins
       - package: SwiftFFmpeg
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.kemalsanli.mediagate

@@ -30,6 +30,8 @@
 		<string>$(PRODUCT_MODULE_NAME).ActionViewController</string>
 		<key>NSExtensionAttributes</key>
 		<dict>
+			<key>NSExtensionServiceToolbarIconName</key>
+			<string>ExtensionIcon</string>
 			<key>NSExtensionActivationRule</key>
 			<dict>
 				<key>NSExtensionActivationSupportsImageWithMaxCount</key>
