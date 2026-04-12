@@ -14,13 +14,8 @@ jobs:
   build:
     name: Build & Test
     runs-on: macos-15
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
-
-      - name: Check Swift Version
-        run: swift --version
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -33,7 +28,6 @@ jobs:
           xcodebuild -resolvePackageDependencies \
             -project MediaGate.xcodeproj \
             -scheme MediaGate
-        continue-on-error: true
 
       - name: Build
         run: |
@@ -53,3 +47,23 @@ jobs:
             -only-testing:MediaGateTests \
             -skipPackagePluginValidation \
             CODE_SIGNING_ALLOWED=NO
+
+  swiftlint:
+    name: Lint
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for warnings
+        run: |
+          brew install xcodegen
+          xcodegen generate
+          xcodebuild build \
+            -project MediaGate.xcodeproj \
+            -scheme MediaGate \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee build.log
+          if grep -q "warning:" build.log; then
+            echo "::warning::Build produced warnings"
+          fi
