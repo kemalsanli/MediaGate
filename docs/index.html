@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediaGate</title>
+    <meta name="description" content="Convert any media format on iPhone. On-device. Private. Open source.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+            background: #000;
+            color: #f5f5f7;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+
+        /* ── Nav ── */
+        nav {
+            position: fixed; top: 0; width: 100%; z-index: 50;
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+        }
+        .nav-inner {
+            max-width: 980px; margin: 0 auto;
+            padding: 0 1.5rem;
+            height: 48px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .nav-brand {
+            font-size: 1.0625rem; font-weight: 600;
+            color: #f5f5f7; text-decoration: none;
+            letter-spacing: -0.01em;
+        }
+        .nav-links { display: flex; gap: 1.75rem; }
+        .nav-links a {
+            font-size: 0.75rem; font-weight: 400;
+            color: #a1a1a6; text-decoration: none;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: #f5f5f7; }
+
+        /* ── Sections ── */
+        section {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* ── Hero ── */
+        .hero {
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center;
+            padding-top: 48px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-gate {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -52%);
+            width: clamp(320px, 45vw, 520px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .hero-gate svg { width: 100%; height: auto; }
+        .gate-path {
+            stroke-dasharray: 900;
+            stroke-dashoffset: 900;
+            animation: gate-draw 2.4s cubic-bezier(0.65, 0, 0.35, 1) 0.3s forwards;
+        }
+        @keyframes gate-draw {
+            to { stroke-dashoffset: 0; }
+        }
+        .hero h1, .hero p, .hero-links { position: relative; z-index: 1; }
+        .hero h1 {
+            font-size: clamp(3rem, 7vw, 5.5rem);
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            line-height: 1.05;
+            margin-bottom: 1.25rem;
+            background: linear-gradient(180deg, #f5f5f7 0%, #a1a1a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero p {
+            font-size: clamp(1.125rem, 2vw, 1.5rem);
+            font-weight: 400;
+            color: #a1a1a6;
+            max-width: 460px;
+            line-height: 1.4;
+            margin-bottom: 2.5rem;
+        }
+        .hero-links {
+            display: flex; gap: 1.5rem; align-items: center;
+        }
+        .hero-links a {
+            font-size: 1.1875rem;
+            font-weight: 400;
+            text-decoration: none;
+            display: inline-flex; align-items: center; gap: 0.375rem;
+            cursor: pointer;
+        }
+        .hero-links a.primary { color: #2997ff; }
+        .hero-links a.primary:hover { text-decoration: underline; }
+        .hero-links a.secondary { color: #2997ff; }
+        .hero-links a.secondary:hover { text-decoration: underline; }
+        .hero-links svg { width: 0.6em; height: 0.6em; }
+
+        /* ── Statement ── */
+        .statement {
+            padding: 8rem 1.5rem;
+            text-align: center;
+        }
+        .statement p {
+            font-size: clamp(1.5rem, 3.5vw, 2.75rem);
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            line-height: 1.25;
+            max-width: 720px;
+            margin: 0 auto;
+            color: #a1a1a6;
+        }
+        .statement p strong {
+            color: #f5f5f7;
+        }
+
+        /* ── Features ── */
+        .features {
+            padding: 0 1.5rem 7rem;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .feature-tile {
+            background: #1d1d1f;
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            min-height: 380px;
+            display: flex; flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease;
+            cursor: default;
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-tile:hover {
+            transform: scale(1.02);
+        }
+        .feature-tile.wide {
+            grid-column: 1 / -1;
+        }
+        .feature-tile h3 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            position: relative; z-index: 1;
+        }
+        .feature-tile p {
+            font-size: 0.9375rem;
+            color: #a1a1a6;
+            line-height: 1.5;
+            max-width: 380px;
+            position: relative; z-index: 1;
+        }
+        .feature-tile .label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #a1a1a6;
+            margin-bottom: 0.75rem;
+            position: relative; z-index: 1;
+        }
+        .tile-icon {
+            width: 64px; height: 64px;
+            margin-bottom: 1.75rem;
+            position: relative; z-index: 1;
+        }
+        .tile-icon svg { width: 100%; height: 100%; }
+        .tile-glow {
+            position: absolute;
+            top: 2.5rem; left: 50%;
+            transform: translateX(-50%);
+            width: 180px; height: 180px;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.12;
+            pointer-events: none;
+        }
+        .glow-blue { background: #2997ff; }
+        .glow-green { background: #30d158; }
+        .glow-purple { background: #bf5af2; }
+        .glow-orange { background: #ff9f0a; }
+        .glow-teal { background: #64d2ff; }
+        .wide .tile-glow { top: 1.5rem; }
+
+
+        /* ── Formats ── */
+        .formats {
+            padding: 8rem 1.5rem;
+            text-align: center;
+        }
+        .formats h2 {
+            font-size: clamp(1.75rem, 3vw, 2.5rem);
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.625rem;
+        }
+        .formats .subtitle {
+            font-size: 1.0625rem;
+            color: #a1a1a6;
+            margin-bottom: 3.5rem;
+        }
+        .format-row {
+            margin-bottom: 2.5rem;
+        }
+        .format-row h3 {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6e6e73;
+            margin-bottom: 0.875rem;
+        }
+        .format-tags {
+            display: flex; flex-wrap: wrap; gap: 0.5rem;
+            justify-content: center;
+        }
+        .tag {
+            padding: 0.375rem 0.875rem;
+            background: #1d1d1f;
+            border-radius: 100px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: #a1a1a6;
+            letter-spacing: 0.01em;
+        }
+
+        /* ── CTA ── */
+        .cta {
+            padding: 8rem 1.5rem 6rem;
+            text-align: center;
+        }
+        .cta h2 {
+            font-size: clamp(2rem, 4vw, 3.25rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(180deg, #f5f5f7 0%, #a1a1a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .cta-links {
+            display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;
+        }
+        .cta-links a {
+            font-size: 1.0625rem; font-weight: 400;
+            color: #2997ff; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 0.375rem;
+        }
+        .cta-links a:hover { text-decoration: underline; }
+        .cta-links svg { width: 0.6em; height: 0.6em; }
+
+        /* ── Footer ── */
+        footer {
+            border-top: 1px solid #424245;
+            padding: 1.25rem 1.5rem;
+            text-align: center;
+        }
+        .footer-inner {
+            max-width: 980px; margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 0.5rem;
+        }
+        .footer-inner span { font-size: 0.75rem; color: #6e6e73; }
+        .footer-links { display: flex; gap: 1.25rem; }
+        .footer-links a {
+            font-size: 0.75rem; color: #a1a1a6; text-decoration: none;
+        }
+        .footer-links a:hover { color: #f5f5f7; }
+
+        /* ── Reduced Motion ── */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+            .gate-path { stroke-dashoffset: 0; }
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 734px) {
+            .features-grid { grid-template-columns: 1fr; }
+            .hero-links { flex-direction: column; gap: 0.75rem; }
+            .footer-inner { flex-direction: column; text-align: center; }
+            .feature-tile { min-height: 260px; padding: 2rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-inner">
+            <a href="/" class="nav-brand">MediaGate</a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#formats">Formats</a>
+                <a href="https://github.com/kemalsanli/MediaGate">GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-gate">
+            <svg viewBox="0 0 200 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path class="gate-path" d="M30 270 L30 90 A70 70 0 0 1 170 90 L170 270 L30 270" stroke="url(#gate-gradient)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <defs>
+                    <linearGradient id="gate-gradient" x1="100" y1="0" x2="100" y2="280" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#f5f5f7" stop-opacity="0.15"/>
+                        <stop offset="100%" stop-color="#f5f5f7" stop-opacity="0.03"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+        <h1>Save anything.</h1>
+        <p>Share any unsupported media file on iPhone. It converts on-device and saves to Photos.</p>
+        <div class="hero-links">
+            <a href="https://github.com/kemalsanli/MediaGate" class="primary">View on GitHub <svg viewBox="0 0 12 12" fill="currentColor"><path d="M3.5 1.5L8.5 6L3.5 10.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <a href="https://github.com/sponsors/kemalsanli" class="secondary">Support the project <svg viewBox="0 0 12 12" fill="currentColor"><path d="M3.5 1.5L8.5 6L3.5 10.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+    </section>
+
+    <section class="statement">
+        <p><strong>MKV, AVI, WebP, SVG, RAW, PSD</strong> &mdash; formats your phone can't open. <strong>MediaGate converts them in seconds.</strong> No cloud. No account. No tracking. Everything stays on your device.</p>
+    </section>
+
+    <section class="features" id="features">
+        <div class="features-grid">
+            <div class="feature-tile">
+                <div class="glow-blue tile-glow"></div>
+                <div class="tile-icon">
+                    <svg viewBox="0 0 64 64" fill="none">
+                        <path d="M35.5 6L26 28H38L24 58" stroke="url(#g-bolt)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <defs><linearGradient id="g-bolt" x1="30" y1="6" x2="30" y2="58"><stop stop-color="#64d2ff"/><stop offset="1" stop-color="#2997ff"/></linearGradient></defs>
+                    </svg>
+                </div>
+                <div class="label">Performance</div>
+                <h3>Hardware accelerated.</h3>
+                <p>H.264 encoding through VideoToolbox. Small files convert instantly within the Share Extension.</p>
+            </div>
+            <div class="feature-tile">
+                <div class="glow-green tile-glow"></div>
+                <div class="tile-icon">
+                    <svg viewBox="0 0 64 64" fill="none">
+                        <rect x="14" y="28" width="36" height="28" rx="5" stroke="url(#g-lock)" stroke-width="3.5"/>
+                        <path d="M22 28V20C22 13.4 27.4 8 34 8H30C36.6 8 42 13.4 42 20V28" stroke="url(#g-lock)" stroke-width="3.5" stroke-linecap="round"/>
+                        <circle cx="32" cy="40" r="3.5" fill="url(#g-lock)"/>
+                        <path d="M32 44V49" stroke="url(#g-lock)" stroke-width="3" stroke-linecap="round"/>
+                        <defs><linearGradient id="g-lock" x1="32" y1="8" x2="32" y2="56"><stop stop-color="#30d158"/><stop offset="1" stop-color="#34c759"/></linearGradient></defs>
+                    </svg>
+                </div>
+                <div class="label">Privacy</div>
+                <h3>On-device. Always.</h3>
+                <p>Zero network requests. Zero analytics. Your media never leaves your iPhone.</p>
+            </div>
+            <div class="feature-tile">
+                <div class="glow-purple tile-glow"></div>
+                <div class="tile-icon">
+                    <svg viewBox="0 0 64 64" fill="none">
+                        <rect x="6" y="6" width="22" height="22" rx="6" stroke="url(#g-grid)" stroke-width="3"/>
+                        <rect x="36" y="6" width="22" height="22" rx="6" stroke="url(#g-grid)" stroke-width="3"/>
+                        <rect x="6" y="36" width="22" height="22" rx="6" stroke="url(#g-grid)" stroke-width="3"/>
+                        <rect x="36" y="36" width="22" height="22" rx="6" stroke="url(#g-grid)" stroke-width="3"/>
+                        <defs><linearGradient id="g-grid" x1="32" y1="6" x2="32" y2="58"><stop stop-color="#bf5af2"/><stop offset="1" stop-color="#af52de"/></linearGradient></defs>
+                    </svg>
+                </div>
+                <div class="label">Integration</div>
+                <h3>Built into the share sheet.</h3>
+                <p>Appears in both the app row and actions list. Share from Files, Safari, Mail &mdash; any app.</p>
+            </div>
+            <div class="feature-tile">
+                <div class="glow-orange tile-glow"></div>
+                <div class="tile-icon">
+                    <svg viewBox="0 0 64 64" fill="none">
+                        <circle cx="32" cy="32" r="26" stroke="url(#g-globe)" stroke-width="3"/>
+                        <ellipse cx="32" cy="32" rx="10" ry="26" stroke="url(#g-globe)" stroke-width="2.5"/>
+                        <path d="M6 32H58" stroke="url(#g-globe)" stroke-width="2.5"/>
+                        <path d="M10 18H54" stroke="url(#g-globe)" stroke-width="1.5" opacity="0.5"/>
+                        <path d="M10 46H54" stroke="url(#g-globe)" stroke-width="1.5" opacity="0.5"/>
+                        <defs><linearGradient id="g-globe" x1="32" y1="6" x2="32" y2="58"><stop stop-color="#ff9f0a"/><stop offset="1" stop-color="#ff9500"/></linearGradient></defs>
+                    </svg>
+                </div>
+                <div class="label">Localization</div>
+                <h3>36 languages.</h3>
+                <p>From Arabic to Vietnamese. With in-app language switching.</p>
+            </div>
+            <div class="feature-tile wide">
+                <div class="glow-teal tile-glow"></div>
+                <div class="tile-icon">
+                    <svg viewBox="0 0 64 64" fill="none">
+                        <path d="M17 56 L17 24 A15 15 0 0 1 47 24 L47 56 L17 56" stroke="url(#g-gate)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <defs><linearGradient id="g-gate" x1="32" y1="9" x2="32" y2="56"><stop stop-color="#64d2ff"/><stop offset="1" stop-color="#5ac8fa"/></linearGradient></defs>
+                    </svg>
+                </div>
+                <div class="label">Open Source</div>
+                <h3>Free. Forever.</h3>
+                <p>Licensed under GPLv3. No subscription, no ads. An optional tip jar if you'd like to support development.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="formats" id="formats">
+        <h2>Every format you need.</h2>
+        <p class="subtitle">58 file extensions. Converted to what Photos understands.</p>
+
+        <div class="format-row">
+            <h3>Video &rarr; MP4</h3>
+            <div class="format-tags">
+                <span class="tag">MKV</span><span class="tag">AVI</span><span class="tag">DIVX</span><span class="tag">WMV</span><span class="tag">ASF</span>
+                <span class="tag">FLV</span><span class="tag">F4V</span><span class="tag">WebM</span><span class="tag">MPEG</span><span class="tag">MPG</span><span class="tag">M2V</span>
+                <span class="tag">3GP</span><span class="tag">3G2</span><span class="tag">TS</span><span class="tag">M2TS</span><span class="tag">MTS</span>
+                <span class="tag">VOB</span><span class="tag">OGV</span><span class="tag">RM</span><span class="tag">RMVB</span>
+            </div>
+        </div>
+
+        <div class="format-row">
+            <h3>Image &rarr; PNG / JPEG</h3>
+            <div class="format-tags">
+                <span class="tag">BMP</span><span class="tag">WebP</span><span class="tag">TIFF</span><span class="tag">TIF</span>
+                <span class="tag">SVG</span><span class="tag">TGA</span><span class="tag">ICO</span><span class="tag">PSD</span>
+                <span class="tag">PCX</span><span class="tag">PPM</span><span class="tag">PGM</span><span class="tag">PBM</span>
+                <span class="tag">CR2</span><span class="tag">NEF</span><span class="tag">ARW</span><span class="tag">DNG</span>
+                <span class="tag">ORF</span><span class="tag">RW2</span><span class="tag">RAF</span><span class="tag">PEF</span>
+                <span class="tag">SRW</span><span class="tag">X3F</span><span class="tag">3FR</span><span class="tag">ERF</span>
+                <span class="tag">KDC</span><span class="tag">MRW</span><span class="tag">DCR</span>
+            </div>
+        </div>
+
+        <div class="format-row">
+            <h3>Passthrough</h3>
+            <div class="format-tags">
+                <span class="tag">MP4</span><span class="tag">MOV</span><span class="tag">M4V</span><span class="tag">HEVC</span>
+                <span class="tag">JPG</span><span class="tag">JPEG</span><span class="tag">PNG</span>
+                <span class="tag">HEIF</span><span class="tag">HEIC</span><span class="tag">GIF</span><span class="tag">AVIF</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <h2>Start saving.</h2>
+        <div class="cta-links">
+            <a href="https://github.com/kemalsanli/MediaGate">Source code <svg viewBox="0 0 12 12"><path d="M3.5 1.5L8.5 6L3.5 10.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <a href="https://github.com/kemalsanli/MediaGate/releases">Releases <svg viewBox="0 0 12 12"><path d="M3.5 1.5L8.5 6L3.5 10.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-inner">
+            <span>&copy; 2026 Kemal Sanl&#305;</span>
+            <div class="footer-links">
+                <a href="privacy.html">Privacy</a>
+                <a href="terms.html">Terms</a>
+                <a href="https://github.com/kemalsanli/MediaGate">GitHub</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

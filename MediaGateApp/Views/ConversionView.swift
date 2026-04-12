@@ -37,7 +37,7 @@ struct ConversionView: View {
                     cancelButton
                 }
             }
-            .navigationTitle(String(localized: "Converting"))
+            .navigationTitle("Converting")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
@@ -115,7 +115,7 @@ struct ConversionView: View {
             }
 
         case .completed:
-            Label(String(localized: "Saved to Photos"), systemImage: "checkmark.circle.fill")
+            Label("Saved to Photos", systemImage: "checkmark.circle.fill")
                 .font(.caption)
                 .foregroundStyle(.green)
 

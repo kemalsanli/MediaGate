@@ -25,14 +25,14 @@ private let maxVideoSizeForExtension: UInt64 = 15_000_000 // 15 MB
 /// Maximum time (in seconds) to attempt a conversion in the extension.
 private let extensionConversionTimeout: TimeInterval = 20
 
-/// The Share Extension's principal class.
+/// Action Extension — appears in the share sheet's "Actions" row as "MediaGate ile Kaydet".
 ///
-/// **Crash-safe flow:**
+/// Performs the same conversion logic as the Share Extension:
 /// 1. Always copy the file to the shared container first.
 /// 2. Attempt in-extension conversion for images and small videos.
 /// 3. On success → save to Photos, remove from pending queue.
 /// 4. On failure → file remains in pending queue for the main app.
-class ShareViewController: UIViewController {
+class ActionViewController: UIViewController {
 
     private let statusLabel = UILabel()
     private let spinner = UIActivityIndicatorView(style: .large)
@@ -130,7 +130,6 @@ class ShareViewController: UIViewController {
 
         Task {
             // Global safety timeout — extension MUST dismiss within 25 seconds
-            // regardless of what happens. Prevents frozen/transparent screen.
             let timeoutTask = Task {
                 try await Task.sleep(for: .seconds(25))
                 SharedConstants.hasPendingConversions = true
@@ -177,24 +176,23 @@ class ShareViewController: UIViewController {
                     } else {
                         queuedCount += 1
                     }
-                } catch let shareErr as ShareError {
+                } catch let actionErr as ActionError {
                     await showResult(
                         icon: "exclamationmark.triangle.fill", color: .systemOrange,
                         title: NSLocalizedString("File too large", comment: ""),
-                        detail: shareErr.localizedDescription
+                        detail: actionErr.localizedDescription
                     )
                     try? await Task.sleep(for: .seconds(2.0))
                     completeRequest()
                     return
                 } catch {
                     queuedCount += 1
-                    print("[ShareExt] Error: \(error.localizedDescription)")
+                    print("[ActionExt] Error: \(error.localizedDescription)")
                 }
             }
 
             // Show result
             if queuedCount == 0 && savedCount > 0 {
-                // Everything converted and saved — done!
                 await showResult(
                     icon: "checkmark.circle.fill", color: .systemGreen,
                     title: NSLocalizedString("Saved to Photos!", comment: ""),
@@ -202,7 +200,6 @@ class ShareViewController: UIViewController {
                 )
                 try? await Task.sleep(for: .seconds(1.2))
             } else if queuedCount > 0 {
-                // Some/all files need the main app
                 SharedConstants.hasPendingConversions = true
                 await showResult(
                     icon: "arrow.triangle.2.circlepath", color: .systemOrange,
@@ -226,18 +223,17 @@ class ShareViewController: UIViewController {
             UTType.movie.identifier, UTType.item.identifier,
         ]
         guard let typeID = typeIdentifiers.first(where: { provider.hasItemConformingToTypeIdentifier($0) }) else {
-            throw ShareError.noFileURL
+            throw ActionError.noFileURL
         }
 
         return try await withCheckedThrowingContinuation { continuation in
             provider.loadFileRepresentation(forTypeIdentifier: typeID) { url, error in
                 if let error { continuation.resume(throwing: error); return }
-                guard let url else { continuation.resume(throwing: ShareError.noFileURL); return }
+                guard let url else { continuation.resume(throwing: ActionError.noFileURL); return }
 
-                // Check file size BEFORE copying — prevent extension OOM on huge files
                 let size = FileManager.default.fileSize(at: url)
                 if size > SafetyChecks.maxFileSize {
-                    continuation.resume(throwing: ShareError.fileTooLarge(size))
+                    continuation.resume(throwing: ActionError.fileTooLarge(size))
                     return
                 }
 
@@ -257,7 +253,7 @@ class ShareViewController: UIViewController {
 
     private func saveToSharedContainer(sourceURL: URL, typeHint: String?) throws -> PendingConversion {
         guard let pendingDir = SharedConstants.pendingDirectoryURL else {
-            throw ShareError.sharedContainerUnavailable
+            throw ActionError.sharedContainerUnavailable
         }
         let originalFilename = sourceURL.lastPathComponent
         let storedFilename = "\(UUID().uuidString)_\(originalFilename)"
@@ -276,20 +272,14 @@ class ShareViewController: UIViewController {
 
     // MARK: - In-Extension Conversion
 
-    /// File extensions that are too memory-intensive to process in the extension.
     private static let heavyImageFormats: Set<String> = [
         "cr2", "nef", "arw", "dng", "orf", "rw2", "raf", "pef",
-        "srw", "x3f", "3fr", "erf", "kdc", "mrw", "dcr", // RAW photos
-        "psd", "svg" // Other heavy formats
+        "srw", "x3f", "3fr", "erf", "kdc", "mrw", "dcr",
+        "psd", "svg"
     ]
 
-    /// Max image file size for in-extension conversion (5 MB).
-    /// Larger images are queued for the main app.
     private static let maxImageSizeForExtension: UInt64 = 5_000_000
 
-    /// Attempts to convert and save the file directly in the extension.
-    ///
-    /// - Returns: `true` if successfully saved to Photos, `false` if queued for main app.
     private func attemptConversion(pending: PendingConversion) async -> Bool {
         guard let pendingDir = SharedConstants.pendingDirectoryURL else { return false }
         let sourceURL = pendingDir.appendingPathComponent(pending.storedFilename)
@@ -309,7 +299,6 @@ class ShareViewController: UIViewController {
                 return true
 
             case .image:
-                // RAW photos and large images are too heavy for extension — queue for main app
                 let ext = sourceURL.pathExtension.lowercased()
                 let fileSize = FileManager.default.fileSize(at: sourceURL)
                 if Self.heavyImageFormats.contains(ext) || fileSize > Self.maxImageSizeForExtension {
@@ -328,20 +317,17 @@ class ShareViewController: UIViewController {
             case .video:
                 let fileSize = FileManager.default.fileSize(at: sourceURL)
                 guard fileSize > 0 && fileSize <= maxVideoSizeForExtension else { return false }
-
-                // Try video conversion with a timeout
                 return await convertSmallVideo(pending: pending, sourceURL: sourceURL)
 
             case .unsupported:
                 return false
             }
         } catch {
-            print("[ShareExt] Conversion failed, queued for main app: \(error.localizedDescription)")
+            print("[ActionExt] Conversion failed, queued for main app: \(error.localizedDescription)")
             return false
         }
     }
 
-    /// Attempts to convert a small video file within the extension's time/memory limits.
     private func convertSmallVideo(pending: PendingConversion, sourceURL: URL) async -> Bool {
         do {
             let tempDir = try FileManager.default.createConversionTempDirectory(jobID: pending.id.uuidString)
@@ -349,7 +335,6 @@ class ShareViewController: UIViewController {
                 sourceURL.deletingPathExtension().lastPathComponent + ".mp4"
             )
 
-            // Run with timeout
             let success = try await withThrowingTaskGroup(of: Bool.self) { group in
                 group.addTask {
                     try self.transcodeVideo(input: sourceURL, output: outputURL)
@@ -357,7 +342,7 @@ class ShareViewController: UIViewController {
                 }
                 group.addTask {
                     try await Task.sleep(for: .seconds(extensionConversionTimeout))
-                    throw ShareError.timeout
+                    throw ActionError.timeout
                 }
 
                 let result = try await group.next() ?? false
@@ -373,14 +358,12 @@ class ShareViewController: UIViewController {
             }
             return false
         } catch {
-            print("[ShareExt] Video conversion timed out or failed: \(error.localizedDescription)")
+            print("[ActionExt] Video conversion timed out or failed: \(error.localizedDescription)")
             FileManager.default.cleanupConversionTempDirectory(jobID: pending.id.uuidString)
             return false
         }
     }
 
-    /// Lightweight video transcode using SwiftFFmpeg — no progress reporting,
-    /// just input→decode→encode→output as fast as possible.
     nonisolated private func transcodeVideo(input: URL, output: URL) throws {
         let ifmtCtx = try AVFormatContext(url: input.path)
         try ifmtCtx.findStreamInfo()
@@ -390,13 +373,11 @@ class ShareViewController: UIViewController {
         let inVideoStream = ifmtCtx.streams[videoIdx]
         let inAudioStream = audioIdx.map { ifmtCtx.streams[$0] }
 
-        // Decoder
         guard let decoder = AVCodec.findDecoderById(inVideoStream.codecParameters.codecId) else { return }
         let decoderCtx = AVCodecContext(codec: decoder)
         decoderCtx.setParameters(inVideoStream.codecParameters)
         try decoderCtx.openCodec()
 
-        // Encoder
         guard let encoder = AVCodec.findEncoderByName("h264_videotoolbox")
                 ?? AVCodec.findEncoderById(.H264) else { return }
         let encoderCtx = AVCodecContext(codec: encoder)
@@ -414,7 +395,6 @@ class ShareViewController: UIViewController {
             encoderCtx.pixelFormat = .YUV420P
         }
 
-        // Output
         let ofmtCtx = try AVFormatContext(format: nil, filename: output.path)
         if ofmtCtx.outputFormat!.flags.contains(.globalHeader) {
             encoderCtx.flags = encoderCtx.flags.union(.globalHeader)
@@ -425,7 +405,6 @@ class ShareViewController: UIViewController {
         outVideoStream.codecParameters.copy(from: encoderCtx)
         outVideoStream.timebase = encoderCtx.timebase
 
-        // Audio passthrough
         let mp4AudioCodecs: Set<AVCodecID> = [.AAC, .MP3, .FLAC]
         var outAudioStream: AVStream?
         if let inAudio = inAudioStream, mp4AudioCodecs.contains(inAudio.codecParameters.codecId) {
@@ -442,7 +421,6 @@ class ShareViewController: UIViewController {
         }
         try ofmtCtx.writeHeader()
 
-        // Transcode loop
         let pkt = AVPacket()
         let frame = AVFrame()
 
@@ -484,7 +462,7 @@ class ShareViewController: UIViewController {
             try Task.checkCancellation()
         }
 
-        // Flush
+        // Flush decoder
         try decoderCtx.sendPacket(nil)
         while true {
             do { try decoderCtx.receiveFrame(frame) } catch { break }
@@ -503,6 +481,7 @@ class ShareViewController: UIViewController {
             }
         }
 
+        // Flush encoder
         try encoderCtx.sendFrame(nil)
         let flushPkt = AVPacket()
         while true {
@@ -545,7 +524,7 @@ class ShareViewController: UIViewController {
     }
 }
 
-private enum ShareError: LocalizedError {
+private enum ActionError: LocalizedError {
     case noFileURL
     case sharedContainerUnavailable
     case timeout

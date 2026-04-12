@@ -1,0 +1,251 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "MediaGate"
+          }
+        }
+      }
+    },
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "MediaGate"
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryAddUsageDescription" : {
+      "comment" : "Privacy - Photo Library Additions Usage Description",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتاج MediaGate إلى إذن لحفظ الوسائط المحولة في مكتبة الصور."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate necessita accés per desar els fitxers convertits a la biblioteca de fotos."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate potřebuje přístup k uložení převedených médií do vaší knihovny fotografií."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate har brug for adgang til at gemme konverterede medier i dit fotobibliotek."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate benötigt Zugriff, um konvertierte Medien in deiner Fotomediathek zu speichern."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το MediaGate χρειάζεται πρόσβαση για αποθήκευση μετατρεπόμενων μέσων στη βιβλιοθήκη φωτογραφιών."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate needs access to save converted media to your photo library."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate necesita acceso para guardar los archivos convertidos en tu fototeca."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate necesita acceso para guardar los archivos convertidos en tu fototeca."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate tarvitsee pääsyn tallentaakseen muunnetut mediatiedostot kuvakirjastoosi."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate a besoin d'accéder à votre photothèque pour y enregistrer les médias convertis."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate a besoin d'accéder à votre photothèque pour y enregistrer les médias convertis."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate צריך גישה כדי לשמור מדיה שהומרה בספריית התמונות שלך."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate को परिवर्तित मीडिया को आपकी फ़ोटो लाइब्रेरी में सहेजने के लिए एक्सेस चाहिए।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate treba pristup za spremanje pretvorenih medija u vašu foto knjižnicu."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A MediaGate-nek hozzáférésre van szüksége a konvertált média mentéséhez a fotókönyvtáradba."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate memerlukan akses untuk menyimpan media yang dikonversi ke perpustakaan foto Anda."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate ha bisogno di accedere alla tua libreria foto per salvare i file convertiti."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGateは変換したメディアを写真ライブラリに保存するためにアクセスが必要です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate는 변환된 미디어를 사진 보관함에 저장하기 위해 접근 권한이 필요합니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate memerlukan akses untuk menyimpan media yang ditukar ke pustaka foto anda."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate trenger tilgang for å lagre konverterte medier i fotobiblioteket ditt."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate heeft toegang nodig om geconverteerde media in je fotobibliotheek op te slaan."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate potrzebuje dostępu, aby zapisywać skonwertowane pliki w bibliotece zdjęć."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O MediaGate precisa de acesso para salvar a mídia convertida na sua biblioteca de fotos."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O MediaGate precisa de acesso para guardar os ficheiros convertidos na sua fototeca."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate are nevoie de acces pentru a salva fișierele convertite în biblioteca foto."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate требуется доступ для сохранения конвертированных медиафайлов в вашу фотобиблиотеку."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate potrebuje prístup na ukladanie konvertovaných médií do vašej knižnice fotografií."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate behöver åtkomst för att spara konverterade medier i ditt fotobibliotek."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate ต้องการสิทธิ์ในการบันทึกสื่อที่แปลงแล้วไปยังคลังรูปภาพของคุณ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate, dönüştürülmüş medyayı fotoğraf kitaplığınıza kaydetmek için erişime ihtiyaç duyar."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate потребує доступ для збереження конвертованих медіафайлів у вашу фотобібліотеку."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate cần quyền truy cập để lưu phương tiện đã chuyển đổi vào thư viện ảnh của bạn."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate 需要访问权限以将转换后的媒体保存到您的照片图库。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MediaGate 需要取用權限以將轉換後的媒體儲存到您的照片圖庫。"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.1"
+}

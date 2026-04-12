@@ -22,6 +22,11 @@ struct MediaGateApp: App {
     @StateObject private var conversionViewModel = ConversionViewModel()
     @State private var isConverting = false
     @Environment(\.scenePhase) private var scenePhase
+    @AppStorage("selectedLanguage") private var selectedLanguage: String = "system"
+
+    private var activeLocale: Locale {
+        selectedLanguage == "system" ? .autoupdatingCurrent : Locale(identifier: selectedLanguage)
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -44,6 +49,7 @@ struct MediaGateApp: App {
                     checkForPendingConversions()
                 }
             }
+            .environment(\.locale, activeLocale)
             .onAppear {
                 FileManager.default.cleanupAllConversionTempFiles()
                 checkForPendingConversions()

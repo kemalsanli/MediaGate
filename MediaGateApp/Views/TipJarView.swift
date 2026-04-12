@@ -36,11 +36,11 @@ struct TipJarView: View {
                 .padding(24)
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle(String(localized: "Tip Jar"))
+            .navigationTitle("Tip Jar")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(String(localized: "Done")) {
+                    Button("Done") {
                         dismiss()
                     }
                 }

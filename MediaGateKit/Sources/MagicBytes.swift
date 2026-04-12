@@ -46,6 +46,7 @@ public enum MagicBytes {
         ("wmv",   Signature([0x30, 0x26, 0xB2, 0x75])),           // ASF/WMV
         ("mpg",   Signature([0x00, 0x00, 0x01, 0xBA])),           // MPEG-PS
         ("mpg",   Signature([0x00, 0x00, 0x01, 0xB3])),           // MPEG-1 video
+        ("gif",   Signature([0x47, 0x49, 0x46, 0x38])),           // GIF8 — must be before TS (both start with 0x47)
         ("ts",    Signature([0x47])),                               // MPEG-TS sync byte
         ("3gp",   Signature([0x66, 0x74, 0x79, 0x70, 0x33, 0x67], offset: 4)), // ftyp3g
         ("rm",    Signature([0x2E, 0x52, 0x4D, 0x46])),           // .RMF
@@ -79,7 +80,6 @@ public enum MagicBytes {
         // Native/passthrough images
         ("png",   Signature([0x89, 0x50, 0x4E, 0x47])),           // PNG
         ("jpeg",  Signature([0xFF, 0xD8, 0xFF])),                  // JPEG
-        ("gif",   Signature([0x47, 0x49, 0x46])),                  // GIF
         ("heif",  Signature([0x66, 0x74, 0x79, 0x70, 0x68, 0x65], offset: 4)), // ftyphe (HEIF/HEIC)
     ]
 

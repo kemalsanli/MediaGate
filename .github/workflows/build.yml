@@ -1,0 +1,69 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: Resolve SPM Dependencies
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project MediaGate.xcodeproj \
+            -scheme MediaGate
+
+      - name: Build
+        run: |
+          xcodebuild build \
+            -project MediaGate.xcodeproj \
+            -scheme MediaGate \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Run Tests
+        run: |
+          xcodebuild test \
+            -project MediaGate.xcodeproj \
+            -scheme MediaGate \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -only-testing:MediaGateTests \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO
+
+  swiftlint:
+    name: Lint
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for warnings
+        run: |
+          brew install xcodegen
+          xcodegen generate
+          xcodebuild build \
+            -project MediaGate.xcodeproj \
+            -scheme MediaGate \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee build.log
+          if grep -q "warning:" build.log; then
+            echo "::warning::Build produced warnings"
+          fi
