@@ -24,6 +24,8 @@
 	<true/>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>MediaGate needs access to save converted media to your photo library.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>MediaGate does not use the camera. This declaration is required by a linked media processing library.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
