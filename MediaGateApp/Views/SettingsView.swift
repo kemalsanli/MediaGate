@@ -230,7 +230,7 @@ struct LicensesDetailView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("MediaGate")
                         .font(.headline)
-                    Text("Copyright © 2025 Kemal Sanlı")
+                    Text("Copyright © 2025–2026 Kemal Sanlı")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Text("GNU General Public License v3.0")
