@@ -112,6 +112,16 @@ SPM resolves all dependencies automatically on first build.
 6. Images: native conversion via ImageIO / CoreImage / WebKit
 7. The converted file is **saved to Photos**
 
+## Acknowledgments
+
+MediaGate is built with the help of these open-source projects:
+
+| Project | Usage | License |
+|---------|-------|---------|
+| [FFmpeg](https://ffmpeg.org/) via [SwiftFFmpeg](https://github.com/kemalsanli/SwiftFFmpeg) | Video/audio transcoding engine | LGPL/GPL |
+| [fastlane](https://fastlane.tools/) | App Store metadata and screenshot delivery | MIT |
+| [XcodeGen](https://github.com/yonaskolb/XcodeGen) | Xcode project generation from `project.yml` | MIT |
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
@@ -119,5 +129,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 ## License
 
 This project is licensed under the **GNU General Public License v3.0** — see the [LICENSE](LICENSE) file for details.
-
-MediaGate uses FFmpeg libraries via [SwiftFFmpeg](https://github.com/kemalsanli/SwiftFFmpeg), licensed under GPL.
