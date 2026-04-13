@@ -1,0 +1,39 @@
+MediaGate converteix fitxers multimèdia no compatibles i els desa directament a la vostra biblioteca de Fotos. Compartiu des de qualsevol app — Fitxers, Safari, Mail, Missatges — i MediaGate s'encarrega de la resta.
+
+Sense pujades al núvol. Sense comptes. Sense rastreig. Tot passa al vostre dispositiu.
+
+▶ COM FUNCIONA
+Toqueu el botó de compartir en qualsevol fitxer, seleccioneu "Save with MediaGate" i el fitxer convertit apareixerà a Fotos en pocs segons.
+
+▶ FORMATS COMPATIBLES
+
+Video → MP4
+MKV, AVI, WMV, WebM, FLV, MPEG, 3GP, TS, VOB, OGV, RM, DIVX i més.
+
+Image → PNG / JPEG
+WebP, BMP, TIFF, SVG, PSD, TGA, RAW (CR2, NEF, ARW, DNG, ORF, RW2, RAF, PEF i més).
+
+Passthrough (desar directament)
+MP4, MOV, HEVC, JPG, PNG, HEIF, HEIC, GIF, AVIF.
+
+58 extensions de fitxer en 3 categories.
+
+▶ FUNCIONS PRINCIPALS
+
+• Codificació accelerada per maquinari mitjançant VideoToolbox
+• Funciona des del full de compartir — no cal obrir l'app
+• Conversió per lots — compartiu fins a 20 fitxers alhora
+• Qualitat d'imatge ajustable i preajustos de qualitat de vídeo
+• Conserveu o elimineu les metadades i les dades d'ubicació
+• Comprimiu fitxers compatibles per reduir la mida
+• 36 idiomes amb canvi d'idioma dins l'app
+• Zero peticions de xarxa — completament fora de línia
+• Sense anuncis, sense subscripció
+
+▶ PRIVADESA
+MediaGate utilitza accés de només afegir a la biblioteca de fotos. No pot llegir les vostres fotos existents. Sense analítiques, sense telemetria, sense SDK de tercers.
+
+▶ CODI OBERT
+MediaGate és gratuït i de codi obert sota GPLv3. Consulteu el codi font a GitHub.
+
+Hi ha disponible un pot de propines opcional si voleu donar suport al desenvolupament.

@@ -1,0 +1,39 @@
+MediaGate convertește fișierele media neacceptate și le salvează direct în biblioteca ta de Poze. Partajează din orice aplicație — Fișiere, Safari, Mail, Mesaje — iar MediaGate se ocupă de restul.
+
+Fără încărcări în cloud. Fără conturi. Fără urmărire. Totul se întâmplă pe dispozitivul tău.
+
+▶ CUM FUNCȚIONEAZĂ
+Apasă butonul de partajare pe orice fișier, selectează „Save with MediaGate", iar fișierul convertit apare în Poze în câteva secunde.
+
+▶ FORMATE ACCEPTATE
+
+Video → MP4
+MKV, AVI, WMV, WebM, FLV, MPEG, 3GP, TS, VOB, OGV, RM, DIVX și altele.
+
+Image → PNG / JPEG
+WebP, BMP, TIFF, SVG, PSD, TGA, RAW (CR2, NEF, ARW, DNG, ORF, RW2, RAF, PEF și altele).
+
+Passthrough (salvare directă)
+MP4, MOV, HEVC, JPG, PNG, HEIF, HEIC, GIF, AVIF.
+
+58 de extensii de fișiere în 3 categorii.
+
+▶ FUNCȚII PRINCIPALE
+
+• Codare accelerată hardware prin VideoToolbox
+• Funcționează din foaia de partajare — nu trebuie să deschizi aplicația
+• Conversie în lot — partajează până la 20 de fișiere simultan
+• Calitate ajustabilă a imaginii și presetări pentru calitatea video
+• Păstrează sau elimină metadatele și datele de localizare
+• Comprimă fișierele compatibile pentru a reduce dimensiunea
+• 36 de limbi cu schimbare de limbă din aplicație
+• Zero cereri de rețea — complet offline
+• Fără reclame, fără abonament
+
+▶ CONFIDENȚIALITATE
+MediaGate folosește acces la biblioteca foto doar pentru scriere. Nu poate citi pozele tale existente. Fără analiză, fără telemetrie, fără SDK-uri terțe.
+
+▶ OPEN SOURCE
+MediaGate este gratuit și cu sursă deschisă sub licența GPLv3. Vizualizează codul sursă pe GitHub.
+
+Un borcan de bacșișuri opțional este disponibil dacă dorești să susții dezvoltarea.

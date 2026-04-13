@@ -1,0 +1,39 @@
+MediaGate konwertuje nieobsługiwane pliki multimedialne i zapisuje je bezpośrednio w Twojej bibliotece Zdjęć. Udostępnij z dowolnej aplikacji — Pliki, Safari, Mail, Wiadomości — a MediaGate zajmie się resztą.
+
+Bez przesyłania do chmury. Bez kont. Bez śledzenia. Wszystko odbywa się na Twoim urządzeniu.
+
+▶ JAK TO DZIAŁA
+Naciśnij przycisk udostępniania na dowolnym pliku, wybierz „Save with MediaGate", a skonwertowany plik pojawi się w Zdjęciach w ciągu kilku sekund.
+
+▶ OBSŁUGIWANE FORMATY
+
+Video → MP4
+MKV, AVI, WMV, WebM, FLV, MPEG, 3GP, TS, VOB, OGV, RM, DIVX i inne.
+
+Image → PNG / JPEG
+WebP, BMP, TIFF, SVG, PSD, TGA, RAW (CR2, NEF, ARW, DNG, ORF, RW2, RAF, PEF i inne).
+
+Passthrough (zapis bezpośredni)
+MP4, MOV, HEVC, JPG, PNG, HEIF, HEIC, GIF, AVIF.
+
+58 rozszerzeń plików w 3 kategoriach.
+
+▶ GŁÓWNE FUNKCJE
+
+• Sprzętowe kodowanie przez VideoToolbox
+• Działa z arkusza udostępniania — bez konieczności otwierania aplikacji
+• Konwersja wsadowa — udostępnij do 20 plików naraz
+• Regulowana jakość obrazu i ustawienia jakości wideo
+• Zachowaj lub usuń metadane i dane lokalizacji
+• Kompresja kompatybilnych plików w celu zmniejszenia rozmiaru
+• 36 języków z możliwością przełączania w aplikacji
+• Zero zapytań sieciowych — w pełni offline
+• Bez reklam, bez subskrypcji
+
+▶ PRYWATNOŚĆ
+MediaGate korzysta z dostępu do biblioteki zdjęć wyłącznie w trybie zapisu. Nie może odczytywać Twoich istniejących zdjęć. Bez analityki, bez telemetrii, bez SDK firm trzecich.
+
+▶ OPEN SOURCE
+MediaGate jest darmowy i ma otwarte źródła na licencji GPLv3. Kod źródłowy dostępny na GitHubie.
+
+Opcjonalny słoik na napiwki jest dostępny, jeśli chcesz wesprzeć rozwój aplikacji.

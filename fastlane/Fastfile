@@ -1,0 +1,174 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Upload metadata, screenshots, and app rating to App Store Connect"
+  lane :upload_metadata do
+    deliver(
+      skip_binary_upload: true,
+      skip_screenshots: false,
+      overwrite_screenshots: true,
+      force: true,
+      run_precheck_before_submit: false,
+      precheck_include_in_app_purchases: false
+    )
+  end
+
+  desc "Submit the app for App Store review"
+  lane :submit_review do
+    deliver(
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_screenshots: true,
+      submit_for_review: true,
+      automatic_release: true,
+      force: true,
+      run_precheck_before_submit: false,
+      submission_information: {
+        add_id_info_uses_idfa: false
+      }
+    )
+  end
+
+  desc "Build and upload to TestFlight"
+  lane :beta do
+    build_app(
+      scheme: "MediaGate",
+      export_method: "app-store",
+      clean: true
+    )
+    upload_to_testflight(skip_waiting_for_build_processing: true)
+  end
+
+  desc "Find stuck screenshot uploads"
+  lane :find_stuck do
+    require "spaceship"
+    Spaceship::ConnectAPI.login("kemalsanli2@gmail.com")
+    app = Spaceship::ConnectAPI::App.find("com.kemalsanli.mediagate")
+    version = app.get_edit_app_store_version
+    UI.message("Version: #{version.version_string} — State: #{version.app_store_state}")
+    locs = version.get_app_store_version_localizations
+    found = false
+    locs.each do |loc|
+      sets = loc.get_app_screenshot_sets
+      sets.each do |set|
+        screenshots = set.app_screenshots || []
+        screenshots.each do |s|
+          state = s.asset_delivery_state
+          if state && state["state"] != "COMPLETE"
+            UI.error("STUCK: #{loc.locale} | #{set.screenshot_display_type} | state=#{state["state"]} | id=#{s.id}")
+            found = true
+          end
+        end
+      end
+    end
+    UI.success("No stuck screenshots found.") unless found
+  end
+
+  desc "Delete stuck screenshot uploads"
+  lane :fix_stuck do
+    require "spaceship"
+    Spaceship::ConnectAPI.login("kemalsanli2@gmail.com")
+    app = Spaceship::ConnectAPI::App.find("com.kemalsanli.mediagate")
+    version = app.get_edit_app_store_version
+    locs = version.get_app_store_version_localizations
+    locs.each do |loc|
+      sets = loc.get_app_screenshot_sets
+      sets.each do |set|
+        screenshots = set.app_screenshots || []
+        screenshots.each do |s|
+          state = s.asset_delivery_state
+          if state && state["state"] != "COMPLETE"
+            UI.message("Deleting stuck: #{loc.locale} | #{set.screenshot_display_type} | #{s.id}")
+            Spaceship::ConnectAPI.delete_app_screenshot(app_screenshot_id: s.id)
+            UI.success("Deleted #{s.id}")
+          end
+        end
+      end
+    end
+    UI.success("All stuck screenshots cleaned up.")
+  end
+
+  desc "Upload metadata for locales not supported by deliver"
+  lane :upload_extra_locales do
+    require "spaceship"
+
+    Spaceship::ConnectAPI.login("kemalsanli2@gmail.com")
+    app = Spaceship::ConnectAPI::App.find("com.kemalsanli.mediagate")
+    version = app.get_edit_app_store_version
+    UI.message("App version: #{version.version_string} (#{version.id})")
+
+    existing_locs = version.get_app_store_version_localizations
+    existing = existing_locs.map(&:locale)
+    UI.message("Existing locales: #{existing.join(', ')}")
+
+    extra_locales = %w[bn gu kn ml mr or pa sl ta te ur]
+    metadata_path = "/Users/kemalsanli/Documents/GitHub/MediaGate/fastlane/metadata"
+    UI.message("Metadata path: #{metadata_path}")
+    UI.message("bn exists? #{File.directory?(File.join(metadata_path, 'bn'))}")
+
+    extra_locales.each do |locale|
+      dir = File.join(metadata_path, locale)
+      unless File.directory?(dir)
+        UI.error("No metadata directory for #{locale}, skipping")
+        next
+      end
+
+      desc_text = File.read(File.join(dir, "description.txt")).strip rescue ""
+      keywords = File.read(File.join(dir, "keywords.txt")).strip rescue ""
+      name = File.read(File.join(dir, "name.txt")).strip rescue "MediaGate"
+      subtitle = File.read(File.join(dir, "subtitle.txt")).strip rescue ""
+      promo = File.read(File.join(dir, "promotional_text.txt")).strip rescue ""
+      support_url = File.read(File.join(dir, "support_url.txt")).strip rescue ""
+      marketing_url = File.read(File.join(dir, "marketing_url.txt")).strip rescue ""
+      privacy_url = File.read(File.join(dir, "privacy_url.txt")).strip rescue ""
+
+      if existing.include?(locale)
+        UI.message("Updating existing locale: #{locale}")
+        loc = existing_locs.find { |l| l.locale == locale }
+        loc.update(attributes: {
+          description: desc_text,
+          keywords: keywords,
+          marketingUrl: marketing_url,
+          promotionalText: promo,
+          supportUrl: support_url,
+          whatsNew: nil
+        })
+      else
+        UI.message("Creating new locale: #{locale}")
+        begin
+          Spaceship::ConnectAPI.post_app_store_version_localization(
+            app_store_version_id: version.id,
+            attributes: {
+              locale: locale,
+              description: desc_text,
+              keywords: keywords,
+              marketingUrl: marketing_url,
+              promotionalText: promo,
+              supportUrl: support_url
+            }
+          )
+        rescue => e
+          UI.error("Failed to create locale #{locale}: #{e.message}")
+          next
+        end
+      end
+      UI.success("Done: #{locale}")
+    end
+  end
+
+  desc "Full release: upload metadata + screenshots, build, upload binary"
+  lane :release do
+    upload_metadata
+    build_app(
+      scheme: "MediaGate",
+      export_method: "app-store",
+      clean: true
+    )
+    upload_to_app_store(
+      force: true,
+      run_precheck_before_submit: false,
+      submit_for_review: false,
+      automatic_release: true
+    )
+  end
+end

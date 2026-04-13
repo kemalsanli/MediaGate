@@ -1,0 +1,39 @@
+MediaGate chuyển đổi các tập tin media không được hỗ trợ và lưu trực tiếp vào thư viện Ảnh của bạn. Chia sẻ từ bất kỳ ứng dụng nào — Tệp, Safari, Mail, Tin nhắn — và MediaGate lo phần còn lại.
+
+Không tải lên đám mây. Không cần tài khoản. Không theo dõi. Mọi thứ diễn ra ngay trên thiết bị của bạn.
+
+▶ CÁCH HOẠT ĐỘNG
+Nhấn nút chia sẻ trên bất kỳ tập tin nào, chọn "Save with MediaGate", và tập tin đã chuyển đổi sẽ xuất hiện trong Ảnh chỉ trong vài giây.
+
+▶ ĐỊNH DẠNG HỖ TRỢ
+
+Video → MP4
+MKV, AVI, WMV, WebM, FLV, MPEG, 3GP, TS, VOB, OGV, RM, DIVX và nhiều hơn nữa.
+
+Image → PNG / JPEG
+WebP, BMP, TIFF, SVG, PSD, TGA, RAW (CR2, NEF, ARW, DNG, ORF, RW2, RAF, PEF và nhiều hơn nữa).
+
+Passthrough (lưu trực tiếp)
+MP4, MOV, HEVC, JPG, PNG, HEIF, HEIC, GIF, AVIF.
+
+58 phần mở rộng tập tin trong 3 danh mục.
+
+▶ TÍNH NĂNG CHÍNH
+
+• Mã hóa tăng tốc phần cứng qua VideoToolbox
+• Hoạt động từ bảng chia sẻ — không cần mở ứng dụng
+• Chuyển đổi hàng loạt — chia sẻ tối đa 20 tập tin cùng lúc
+• Tùy chỉnh chất lượng ảnh và các mức chất lượng video
+• Giữ lại hoặc xóa siêu dữ liệu và dữ liệu vị trí
+• Nén các tập tin tương thích để giảm dung lượng
+• 36 ngôn ngữ với khả năng chuyển đổi ngôn ngữ trong ứng dụng
+• Không có yêu cầu mạng — hoàn toàn ngoại tuyến
+• Không quảng cáo, không đăng ký thuê bao
+
+▶ QUYỀN RIÊNG TƯ
+MediaGate chỉ sử dụng quyền thêm ảnh vào thư viện. Ứng dụng không thể đọc ảnh hiện có của bạn. Không phân tích, không thu thập dữ liệu, không SDK của bên thứ ba.
+
+▶ MÃ NGUỒN MỞ
+MediaGate miễn phí và mã nguồn mở theo giấy phép GPLv3. Xem mã nguồn trên GitHub.
+
+Bạn có thể ủng hộ phát triển ứng dụng thông qua tính năng tip tùy chọn trong ứng dụng.

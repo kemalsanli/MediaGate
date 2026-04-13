@@ -1,0 +1,39 @@
+MediaGate mengonversi file media yang tidak didukung dan menyimpannya langsung ke Perpustakaan Foto Anda. Bagikan dari aplikasi apa pun — File, Safari, Mail, Pesan — dan MediaGate menangani sisanya.
+
+Tanpa unggahan ke cloud. Tanpa akun. Tanpa pelacakan. Semua diproses di perangkat Anda.
+
+▶ CARA KERJA
+Ketuk tombol bagikan pada file mana pun, pilih "Save with MediaGate", dan file yang telah dikonversi akan muncul di Foto dalam hitungan detik.
+
+▶ FORMAT YANG DIDUKUNG
+
+Video → MP4
+MKV, AVI, WMV, WebM, FLV, MPEG, 3GP, TS, VOB, OGV, RM, DIVX, dan lainnya.
+
+Image → PNG / JPEG
+WebP, BMP, TIFF, SVG, PSD, TGA, RAW (CR2, NEF, ARW, DNG, ORF, RW2, RAF, PEF, dan lainnya).
+
+Passthrough (simpan langsung)
+MP4, MOV, HEVC, JPG, PNG, HEIF, HEIC, GIF, AVIF.
+
+58 ekstensi file dalam 3 kategori.
+
+▶ FITUR UTAMA
+
+• Encoding dipercepat perangkat keras melalui VideoToolbox
+• Berfungsi dari share sheet — tanpa perlu membuka aplikasi
+• Konversi massal — bagikan hingga 20 file sekaligus
+• Kualitas gambar dan preset kualitas video yang dapat disesuaikan
+• Pertahankan atau hapus metadata dan data lokasi
+• Kompres file yang kompatibel untuk mengurangi ukuran
+• 36 bahasa dengan pengalihan bahasa dalam aplikasi
+• Tanpa permintaan jaringan — sepenuhnya offline
+• Tanpa iklan, tanpa langganan
+
+▶ PRIVASI
+MediaGate menggunakan akses perpustakaan foto khusus tambah. Aplikasi ini tidak dapat membaca foto Anda yang sudah ada. Tanpa analitik, tanpa telemetri, tanpa SDK pihak ketiga.
+
+▶ SUMBER TERBUKA
+MediaGate gratis dan bersumber terbuka di bawah lisensi GPLv3. Lihat kode sumber di GitHub.
+
+Fitur tip jar opsional tersedia jika Anda ingin mendukung pengembangan.

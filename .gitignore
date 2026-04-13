@@ -59,3 +59,17 @@ private/
 .env
 *.key
 *.pem
+*.p8
+*.p12
+AuthKey_*.p8
+
+# Fastlane credentials (contains Apple ID email)
+fastlane/Appfile
+
+# Fastlane screenshots (large generated PNGs, use screenshot-generator to recreate)
+fastlane/screenshots/
+
+# Gemfile (fastlane version lock — not needed, using Homebrew fastlane)
+Gemfile
+Gemfile.lock
+fastlane/metadata/review_information/

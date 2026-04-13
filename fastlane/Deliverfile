@@ -1,0 +1,17 @@
+app_identifier "com.kemalsanli.mediagate"
+
+skip_binary_upload true
+overwrite_screenshots true
+force true
+run_precheck_before_submit false
+precheck_include_in_app_purchases false
+
+metadata_path "./fastlane/metadata"
+screenshots_path "./fastlane/screenshots"
+
+app_rating_config_path "./fastlane/rating.json"
+
+copyright "2026 Kemal Sanlı"
+primary_category "PHOTO_AND_VIDEO"
+secondary_category "UTILITIES"
+ignore_language_directory_validation true

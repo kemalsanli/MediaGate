@@ -1,0 +1,39 @@
+A MediaGate nem támogatott médiafájlokat alakít át, és közvetlenül a Fotótárba menti őket. Oszd meg bármely alkalmazásból — Fájlok, Safari, Mail, Üzenetek — a többit a MediaGate intézi.
+
+Nincs felhőbe feltöltés. Nincs fiókregisztráció. Nincs nyomkövetés. Minden a készülékeden történik.
+
+▶ HOGYAN MŰKÖDIK
+Koppints a megosztás gombra bármely fájlnál, válaszd a „Save with MediaGate" lehetőséget, és az átalakított fájl másodperceken belül megjelenik a Fotókban.
+
+▶ TÁMOGATOTT FORMÁTUMOK
+
+Video → MP4
+MKV, AVI, WMV, WebM, FLV, MPEG, 3GP, TS, VOB, OGV, RM, DIVX és még sok más.
+
+Image → PNG / JPEG
+WebP, BMP, TIFF, SVG, PSD, TGA, RAW (CR2, NEF, ARW, DNG, ORF, RW2, RAF, PEF és még sok más).
+
+Passthrough (közvetlen mentés)
+MP4, MOV, HEVC, JPG, PNG, HEIF, HEIC, GIF, AVIF.
+
+58 fájlkiterjesztés 3 kategóriában.
+
+▶ FŐBB FUNKCIÓK
+
+• Hardveresen gyorsított kódolás VideoToolbox segítségével
+• A megosztási lapról működik — nem kell megnyitni az alkalmazást
+• Kötegelt átalakítás — egyszerre akár 20 fájl megosztása
+• Állítható képminőség és videóminőség-profilok
+• Metaadatok és helyadatok megőrzése vagy eltávolítása
+• Kompatibilis fájlok tömörítése a méret csökkentéséhez
+• 36 nyelv alkalmazáson belüli nyelvváltással
+• Nulla hálózati kérés — teljesen offline működés
+• Nincs hirdetés, nincs előfizetés
+
+▶ ADATVÉDELEM
+A MediaGate csak hozzáadási jogosultsággal fér hozzá a fotótárhoz. Nem tudja olvasni a meglévő fotóidat. Nincs analitika, nincs telemetria, nincsenek harmadik féltől származó SDK-k.
+
+▶ NYÍLT FORRÁSKÓD
+A MediaGate ingyenes és nyílt forráskódú, GPLv3 licenc alatt. A forráskód megtekinthető a GitHubon.
+
+Ha szeretnéd támogatni a fejlesztést, az alkalmazásban elérhető egy opcionális borravalódoboz.

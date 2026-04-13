@@ -1,0 +1,1 @@
+Bezplatný konvertor médií s otvoreným zdrojovým kódom. 58 formátov, 36 jazykov, plne offline.

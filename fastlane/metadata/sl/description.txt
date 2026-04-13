@@ -1,0 +1,39 @@
+MediaGate pretvori nepodprte medijske datoteke in jih shrani neposredno v vašo knjižnico Photos. Delite iz katere koli aplikacije — Files, Safari, Mail, Messages — ostalo opravi MediaGate.
+
+Brez nalaganja v oblak. Brez računov. Brez sledenja. Vse se dogaja na vaši napravi.
+
+▶ KAKO DELUJE
+Tapnite gumb za deljenje na kateri koli datoteki, izberite »Save with MediaGate« in pretvorjena datoteka se v nekaj sekundah pojavi v Photos.
+
+▶ PODPRTI FORMATI
+
+Video → MP4
+MKV, AVI, WMV, WebM, FLV, MPEG, 3GP, TS, VOB, OGV, RM, DIVX in več.
+
+Image → PNG / JPEG
+WebP, BMP, TIFF, SVG, PSD, TGA, RAW (CR2, NEF, ARW, DNG, ORF, RW2, RAF, PEF in več).
+
+Passthrough (neposredno shranjevanje)
+MP4, MOV, HEVC, JPG, PNG, HEIF, HEIC, GIF, AVIF.
+
+58 datotečnih končnic v 3 kategorijah.
+
+▶ KLJUČNE FUNKCIJE
+
+• Strojno pospešeno kodiranje prek VideoToolbox
+• Deluje iz lista za deljenje — aplikacije ni treba odpreti
+• Paketna pretvorba — delite do 20 datotek hkrati
+• Nastavljiva kakovost slik in prednastavitve kakovosti videa
+• Ohranite ali odstranite metapodatke in podatke o lokaciji
+• Stisnite združljive datoteke za zmanjšanje velikosti
+• 36 jezikov s preklapljanjem jezika v aplikaciji
+• Brez omrežnih zahtev — popolnoma brez povezave
+• Brez oglasov, brez naročnine
+
+▶ ZASEBNOST
+MediaGate uporablja dostop samo za dodajanje v knjižnico fotografij. Ne more brati vaših obstoječih fotografij. Brez analitike, brez telemetrije, brez SDK-jev tretjih oseb.
+
+▶ ODPRTOKODNOST
+MediaGate je brezplačen in odprtokoden pod licenco GPLv3. Izvorno kodo si oglejte na GitHub.
+
+Na voljo je neobvezen kozarec za napitnino, če želite podpreti razvoj.

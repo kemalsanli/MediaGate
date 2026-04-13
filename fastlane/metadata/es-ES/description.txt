@@ -1,0 +1,39 @@
+MediaGate convierte archivos multimedia no compatibles y los guarda directamente en tu fototeca. Comparte desde cualquier app — Archivos, Safari, Mail, Mensajes — y MediaGate se encarga del resto.
+
+Sin subidas a la nube. Sin cuentas. Sin rastreo. Todo ocurre en tu dispositivo.
+
+▶ CÓMO FUNCIONA
+Toca el botón de compartir en cualquier archivo, selecciona «Guardar con MediaGate», y el archivo convertido aparece en Fotos en segundos.
+
+▶ FORMATOS COMPATIBLES
+
+Vídeo → MP4
+MKV, AVI, WMV, WebM, FLV, MPEG, 3GP, TS, VOB, OGV, RM, DIVX y más.
+
+Imagen → PNG / JPEG
+WebP, BMP, TIFF, SVG, PSD, TGA, RAW (CR2, NEF, ARW, DNG, ORF, RW2, RAF, PEF y más).
+
+Paso directo
+MP4, MOV, HEVC, JPG, PNG, HEIF, HEIC, GIF, AVIF.
+
+58 extensiones de archivo en 3 categorías.
+
+▶ CARACTERÍSTICAS
+
+• Codificación acelerada por hardware vía VideoToolbox
+• Funciona desde el menú de compartir — sin abrir la app
+• Conversión por lotes — hasta 20 archivos a la vez
+• Calidad de imagen y preajustes de vídeo ajustables
+• Conservar o eliminar metadatos y datos de ubicación
+• Comprimir archivos compatibles
+• 36 idiomas con cambio de idioma integrado
+• Cero solicitudes de red — totalmente sin conexión
+• Sin anuncios, sin suscripción
+
+▶ PRIVACIDAD
+MediaGate usa acceso de solo adición a la fototeca. No puede leer tus fotos existentes. Sin analíticas, sin telemetría, sin SDKs de terceros.
+
+▶ CÓDIGO ABIERTO
+MediaGate es gratuito y de código abierto bajo GPLv3. Código fuente disponible en GitHub.
+
+Hay un tarro de propinas opcional disponible para apoyar el desarrollo.

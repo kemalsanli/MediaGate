@@ -1,0 +1,39 @@
+MediaGate konverterer mediefiler som ikke støttes og lagrer dem direkte i Bildebiblioteket ditt. Del fra en hvilken som helst app — Filer, Safari, Mail, Meldinger — så ordner MediaGate resten.
+
+Ingen opplasting til skyen. Ingen kontoer. Ingen sporing. Alt skjer på enheten din.
+
+▶ SLIK FUNGERER DET
+Trykk på delingsknappen på en fil, velg «Save with MediaGate», og den konverterte filen dukker opp i Bilder i løpet av sekunder.
+
+▶ STØTTEDE FORMATER
+
+Video → MP4
+MKV, AVI, WMV, WebM, FLV, MPEG, 3GP, TS, VOB, OGV, RM, DIVX og flere.
+
+Image → PNG / JPEG
+WebP, BMP, TIFF, SVG, PSD, TGA, RAW (CR2, NEF, ARW, DNG, ORF, RW2, RAF, PEF og flere).
+
+Passthrough (lagre direkte)
+MP4, MOV, HEVC, JPG, PNG, HEIF, HEIC, GIF, AVIF.
+
+58 filtyper fordelt på 3 kategorier.
+
+▶ HOVEDFUNKSJONER
+
+• Maskinvareakselerert koding via VideoToolbox
+• Fungerer fra delingsmenyen — ingen grunn til å åpne appen
+• Gruppekonvertering — del opptil 20 filer samtidig
+• Justerbar bildekvalitet og forhåndsinnstillinger for videokvalitet
+• Bevar eller fjern metadata og stedsdata
+• Komprimer kompatible filer for å redusere størrelsen
+• 36 språk med språkbytte i appen
+• Null nettverksforespørsler — fungerer helt uten nett
+• Ingen annonser, ingen abonnement
+
+▶ PERSONVERN
+MediaGate bruker fototilgang med kun tillatelse til å legge til. Appen kan ikke lese eksisterende bilder. Ingen analyse, ingen telemetri, ingen tredjeparts-SDK-er.
+
+▶ ÅPEN KILDEKODE
+MediaGate er gratis og åpen kildekode under GPLv3-lisensen. Se kildekoden på GitHub.
+
+En valgfri tipskrukke er tilgjengelig hvis du ønsker å støtte utviklingen.

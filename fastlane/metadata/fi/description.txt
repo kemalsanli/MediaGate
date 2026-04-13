@@ -1,0 +1,39 @@
+MediaGate muuntaa ei-tuetut mediatiedostot ja tallentaa ne suoraan Kuvat-kirjastoosi. Jaa mistä tahansa sovelluksesta — Tiedostot, Safari, Mail, Viestit — ja MediaGate hoitaa loput.
+
+Ei pilvilatauksia. Ei tilejä. Ei seurantaa. Kaikki tapahtuu laitteellasi.
+
+▶ NÄIN SE TOIMII
+Napauta jakopainiketta missä tahansa tiedostossa, valitse "Save with MediaGate", ja muunnettu tiedosto ilmestyy Kuviin muutamassa sekunnissa.
+
+▶ TUETUT MUODOT
+
+Video → MP4
+MKV, AVI, WMV, WebM, FLV, MPEG, 3GP, TS, VOB, OGV, RM, DIVX ja muut.
+
+Image → PNG / JPEG
+WebP, BMP, TIFF, SVG, PSD, TGA, RAW (CR2, NEF, ARW, DNG, ORF, RW2, RAF, PEF ja muut).
+
+Passthrough (tallenna suoraan)
+MP4, MOV, HEVC, JPG, PNG, HEIF, HEIC, GIF, AVIF.
+
+58 tiedostopäätettä 3 kategoriassa.
+
+▶ KESKEISET OMINAISUUDET
+
+• Laitteistokiihdytetty koodaus VideoToolboxin avulla
+• Toimii suoraan jakovalikosta — sovellusta ei tarvitse avata
+• Erämuunnos — jaa jopa 20 tiedostoa kerralla
+• Säädettävä kuvanlaatu ja videon laatuasetukset
+• Säilytä tai poista metatiedot ja sijaintitiedot
+• Pakkaa yhteensopivat tiedostot koon pienentämiseksi
+• 36 kieltä ja kielen vaihto sovelluksen sisällä
+• Ei verkkopyyntöjä — täysin offline-toiminen
+• Ei mainoksia, ei tilausta
+
+▶ YKSITYISYYS
+MediaGate käyttää vain lisäysoikeutta kuvakirjastoon. Se ei voi lukea olemassa olevia kuviasi. Ei analytiikkaa, ei telemetriaa, ei kolmannen osapuolen SDK:ita.
+
+▶ AVOIN LÄHDEKOODI
+MediaGate on ilmainen ja avoimen lähdekoodin sovellus GPLv3-lisenssillä. Katso lähdekoodi GitHubissa.
+
+Valinnainen tippipurkki on saatavilla, jos haluat tukea kehitystyötä.

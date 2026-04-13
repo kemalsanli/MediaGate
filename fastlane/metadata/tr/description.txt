@@ -1,0 +1,39 @@
+MediaGate, desteklenmeyen medya dosyalarını dönüştürüp doğrudan Fotoğraflar kütüphanenize kaydeder. Herhangi bir uygulamadan paylaşın — Dosyalar, Safari, Mail, Mesajlar — gerisini MediaGate halleder.
+
+Bulut yükleme yok. Hesap yok. Takip yok. Her şey cihazınızda gerçekleşir.
+
+▶ NASIL ÇALIŞIR
+Herhangi bir dosyada paylaş düğmesine dokunun, "MediaGate ile Kaydet" seçin, dönüştürülmüş dosya saniyeler içinde Fotoğraflarda görünsün.
+
+▶ DESTEKLENEN FORMATLAR
+
+Video → MP4
+MKV, AVI, WMV, WebM, FLV, MPEG, 3GP, TS, VOB, OGV, RM, DIVX ve daha fazlası.
+
+Görüntü → PNG / JPEG
+WebP, BMP, TIFF, SVG, PSD, TGA, RAW (CR2, NEF, ARW, DNG, ORF, RW2, RAF, PEF ve daha fazlası).
+
+Doğrudan Aktarma
+MP4, MOV, HEVC, JPG, PNG, HEIF, HEIC, GIF, AVIF.
+
+3 kategoride 58 dosya uzantısı.
+
+▶ ÖZELLİKLER
+
+• VideoToolbox ile donanım hızlandırmalı kodlama
+• Paylaş menüsünden çalışır — uygulama açmanıza gerek yok
+• Toplu dönüştürme — aynı anda 20 dosyaya kadar
+• Ayarlanabilir görüntü kalitesi ve video kalite ön ayarları
+• Meta verileri koruma veya konum bilgisi silme
+• Uyumlu dosyaları sıkıştırma
+• Uygulama içi dil değiştirme ile 36 dil
+• Sıfır ağ isteği — tamamen çevrimdışı
+• Reklam yok, abonelik yok
+
+▶ GİZLİLİK
+MediaGate yalnızca ekleme amalı fotoğraf kütüphanesi erişimi kullanır. Mevcut fotoğraflarınızı okuyamaz. Analitik yok, telemetri yok, üçüncü taraf SDK yok.
+
+▶ AÇIK KAYNAK
+MediaGate, GPLv3 lisansı altında ücretsiz ve açık kaynaktır. Kaynak kodu GitHub'da incelenebilir.
+
+Geliştirmeyi desteklemek isterseniz isteğe bağlı bahşiş kavanozu mevcuttur.

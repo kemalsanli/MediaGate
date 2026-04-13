@@ -1,0 +1,39 @@
+MediaGate převádí nepodporované mediální soubory a ukládá je přímo do vaší knihovny Fotek. Sdílejte z libovolné aplikace — Soubory, Safari, Mail, Zprávy — a MediaGate se postará o zbytek.
+
+Žádné nahrávání do cloudu. Žádné účty. Žádné sledování. Vše probíhá na vašem zařízení.
+
+▶ JAK TO FUNGUJE
+Klepněte na tlačítko sdílení u libovolného souboru, vyberte „Save with MediaGate" a převedený soubor se během několika sekund objeví ve Fotkách.
+
+▶ PODPOROVANÉ FORMÁTY
+
+Video → MP4
+MKV, AVI, WMV, WebM, FLV, MPEG, 3GP, TS, VOB, OGV, RM, DIVX a další.
+
+Image → PNG / JPEG
+WebP, BMP, TIFF, SVG, PSD, TGA, RAW (CR2, NEF, ARW, DNG, ORF, RW2, RAF, PEF a další).
+
+Passthrough (přímé uložení)
+MP4, MOV, HEVC, JPG, PNG, HEIF, HEIC, GIF, AVIF.
+
+58 přípon souborů ve 3 kategoriích.
+
+▶ KLÍČOVÉ FUNKCE
+
+• Hardwarově akcelerované kódování pomocí VideoToolbox
+• Funguje přímo z nabídky sdílení — není třeba otevírat aplikaci
+• Dávková konverze — sdílejte až 20 souborů najednou
+• Nastavitelná kvalita obrazu a předvolby kvality videa
+• Zachování nebo odstranění metadat a údajů o poloze
+• Komprese kompatibilních souborů pro zmenšení velikosti
+• 36 jazyků s možností přepínání přímo v aplikaci
+• Nulové síťové požadavky — plně offline
+• Žádné reklamy, žádné předplatné
+
+▶ SOUKROMÍ
+MediaGate využívá přístup k fotoknihovně pouze pro přidávání. Nemůže číst vaše stávající fotografie. Žádná analytika, žádná telemetrie, žádné SDK třetích stran.
+
+▶ OPEN SOURCE
+MediaGate je zdarma a má otevřený zdrojový kód pod licencí GPLv3. Zdrojový kód si můžete prohlédnout na GitHubu.
+
+Pokud chcete podpořit vývoj, je k dispozici volitelný příspěvek.

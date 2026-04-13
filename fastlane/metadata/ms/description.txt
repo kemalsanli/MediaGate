@@ -1,0 +1,39 @@
+MediaGate menukar fail media yang tidak disokong dan menyimpannya terus ke Pustaka Foto anda. Kongsi dari mana-mana aplikasi — Fail, Safari, Mail, Mesej — dan MediaGate menguruskan selebihnya.
+
+Tiada muat naik ke awan. Tiada akaun. Tiada penjejakan. Semuanya berlaku pada peranti anda.
+
+▶ CARA PENGGUNAAN
+Ketik butang kongsi pada mana-mana fail, pilih "Save with MediaGate", dan fail yang telah ditukar akan muncul dalam Foto dalam beberapa saat.
+
+▶ FORMAT YANG DISOKONG
+
+Video → MP4
+MKV, AVI, WMV, WebM, FLV, MPEG, 3GP, TS, VOB, OGV, RM, DIVX dan lain-lain.
+
+Image → PNG / JPEG
+WebP, BMP, TIFF, SVG, PSD, TGA, RAW (CR2, NEF, ARW, DNG, ORF, RW2, RAF, PEF dan lain-lain).
+
+Passthrough (simpan terus)
+MP4, MOV, HEVC, JPG, PNG, HEIF, HEIC, GIF, AVIF.
+
+58 sambungan fail merentas 3 kategori.
+
+▶ CIRI-CIRI UTAMA
+
+• Pengekodan dipercepatkan perkakasan melalui VideoToolbox
+• Berfungsi dari helaian kongsi — tanpa perlu membuka aplikasi
+• Penukaran kelompok — kongsi sehingga 20 fail sekaligus
+• Kualiti imej boleh laras dan pratetap kualiti video
+• Kekal atau buang metadata dan data lokasi
+• Mampatkan fail yang serasi untuk mengurangkan saiz
+• 36 bahasa dengan penukaran bahasa dalam aplikasi
+• Sifar permintaan rangkaian — sepenuhnya luar talian
+• Tiada iklan, tiada langganan
+
+▶ PRIVASI
+MediaGate menggunakan akses pustaka foto tambah sahaja. Ia tidak boleh membaca foto sedia ada anda. Tiada analitik, tiada telemetri, tiada SDK pihak ketiga.
+
+▶ SUMBER TERBUKA
+MediaGate adalah percuma dan sumber terbuka di bawah lesen GPLv3. Lihat kod sumber di GitHub.
+
+Balang tip pilihan tersedia jika anda ingin menyokong pembangunan.

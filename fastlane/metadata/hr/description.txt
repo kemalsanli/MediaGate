@@ -1,0 +1,39 @@
+MediaGate pretvara nepodržane medijske datoteke i sprema ih izravno u vašu biblioteku Fotografija. Podijelite iz bilo koje aplikacije — Datoteke, Safari, Mail, Poruke — a MediaGate će se pobrinuti za ostatak.
+
+Bez učitavanja u oblak. Bez računa. Bez praćenja. Sve se odvija na vašem uređaju.
+
+▶ KAKO FUNKCIONIRA
+Dodirnite gumb za dijeljenje na bilo kojoj datoteci, odaberite "Save with MediaGate" i pretvorena datoteka pojavit će se u Fotografijama za nekoliko sekundi.
+
+▶ PODRŽANI FORMATI
+
+Video → MP4
+MKV, AVI, WMV, WebM, FLV, MPEG, 3GP, TS, VOB, OGV, RM, DIVX i drugi.
+
+Image → PNG / JPEG
+WebP, BMP, TIFF, SVG, PSD, TGA, RAW (CR2, NEF, ARW, DNG, ORF, RW2, RAF, PEF i drugi).
+
+Passthrough (izravno spremanje)
+MP4, MOV, HEVC, JPG, PNG, HEIF, HEIC, GIF, AVIF.
+
+58 ekstenzija datoteka u 3 kategorije.
+
+▶ KLJUČNE ZNAČAJKE
+
+• Hardverski ubrzano kodiranje putem VideoToolboxa
+• Radi iz izbornika za dijeljenje — nije potrebno otvarati aplikaciju
+• Skupna pretvorba — podijelite do 20 datoteka odjednom
+• Podesiva kvaliteta slike i postavke kvalitete videa
+• Sačuvajte ili uklonite metapodatke i podatke o lokaciji
+• Komprimirajte kompatibilne datoteke za smanjenje veličine
+• 36 jezika s promjenom jezika unutar aplikacije
+• Nula mrežnih zahtjeva — potpuno offline
+• Bez reklama, bez pretplate
+
+▶ PRIVATNOST
+MediaGate koristi pristup fotoknižnici samo za dodavanje. Ne može čitati vaše postojeće fotografije. Bez analitike, bez telemetrije, bez SDK-ova trećih strana.
+
+▶ OTVORENI KOD
+MediaGate je besplatan i otvorenog koda pod licencijom GPLv3. Pregledajte izvorni kod na GitHubu.
+
+Dostupna je neobavezna kutija za napojnice ako želite podržati razvoj.

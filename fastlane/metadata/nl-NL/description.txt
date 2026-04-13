@@ -1,0 +1,39 @@
+MediaGate converteert niet-ondersteunde mediabestanden en slaat ze direct op in je Foto’s-bibliotheek. Deel vanuit elke app — Bestanden, Safari, Mail, Berichten — MediaGate doet de rest.
+
+Geen cloud-uploads. Geen account. Geen tracking. Alles gebeurt op je apparaat.
+
+▶ HOE HET WERKT
+Tik op de deelknop bij een bestand, kies ‘Bewaar met MediaGate’ en het geconverteerde bestand verschijnt binnen seconden in Foto’s.
+
+▶ ONDERSTEUNDE FORMATEN
+
+Video → MP4
+MKV, AVI, WMV, WebM, FLV, MPEG, 3GP, TS, VOB, OGV, RM, DIVX en meer.
+
+Afbeelding → PNG / JPEG
+WebP, BMP, TIFF, SVG, PSD, TGA, RAW (CR2, NEF, ARW, DNG, ORF, RW2, RAF, PEF en meer).
+
+Doorvoer
+MP4, MOV, HEVC, JPG, PNG, HEIF, HEIC, GIF, AVIF.
+
+58 bestandsextensies in 3 categorieën.
+
+▶ FUNCTIES
+
+• Hardwareversnelde codering via VideoToolbox
+• Werkt vanuit het deelmenu — app hoeft niet geopend te worden
+• Batchconversie — tot 20 bestanden tegelijk
+• Aanpasbare beeldkwaliteit en videopresetten
+• Metadata behouden of locatiegegevens verwijderen
+• Compatibele bestanden comprimeren
+• 36 talen met in-app taalwisseling
+• Nul netwerkverzoeken — volledig offline
+• Geen advertenties, geen abonnement
+
+▶ PRIVACY
+MediaGate gebruikt alleen-toevoegen toegang tot de fotobibliotheek. Het kan je bestaande foto’s niet lezen. Geen analytics, geen telemetrie, geen SDK’s van derden.
+
+▶ OPEN SOURCE
+MediaGate is gratis en open source onder GPLv3. Broncode beschikbaar op GitHub.
+
+Een optioneel fooienpotje is beschikbaar om de ontwikkeling te steunen.

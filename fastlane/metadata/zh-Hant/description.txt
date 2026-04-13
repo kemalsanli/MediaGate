@@ -1,0 +1,39 @@
+MediaGate 將不受支援的媒體檔案轉換並直接儲存到您的照片圖庫。從任何應用程式分享——檔案、Safari、郵件、訊息——MediaGate 處理其餘一切。
+
+無雲端上傳。無帳號。無追蹤。一切在您的裝置上完成。
+
+▶ 使用方法
+點擊檔案的分享按鈕，選擇「用 MediaGate 儲存」，轉換後的檔案幾秒內出現在照片中。
+
+▶ 支援格式
+
+影片 → MP4
+MKV, AVI, WMV, WebM, FLV, MPEG, 3GP, TS, VOB, OGV, RM, DIVX 等。
+
+圖片 → PNG / JPEG
+WebP, BMP, TIFF, SVG, PSD, TGA, RAW (CR2, NEF, ARW, DNG, ORF, RW2, RAF, PEF 等)。
+
+直通
+MP4, MOV, HEVC, JPG, PNG, HEIF, HEIC, GIF, AVIF。
+
+3 個類別共 58 種檔案副檔名。
+
+▶ 主要功能
+
+• 透過 VideoToolbox 硬體加速編碼
+• 從分享選單工作——無需開啟應用
+• 批次轉換——一次最多 20 個檔案
+• 可調整圖片品質和影片品質預設
+• 保留或刪除元資料和位置資訊
+• 壓縮相容檔案
+• 應用程式內語言切換支援 36 種語言
+• 零網路請求——完全離線
+• 無廣告，無訂閱
+
+▶ 隱私
+MediaGate 使用僅新增照片圖庫存取。無法讀取您現有的照片。無分析、無遙測、無第三方 SDK。
+
+▶ 開源
+MediaGate 在 GPLv3 授權下免費開源。原始碼可在 GitHub 查看。
+
+如您願意支持開發，可使用可選的打賞罐。
