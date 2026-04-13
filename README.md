@@ -122,6 +122,13 @@ MediaGate is built with the help of these open-source projects:
 | [fastlane](https://fastlane.tools/) | App Store metadata and screenshot delivery | MIT |
 | [XcodeGen](https://github.com/yonaskolb/XcodeGen) | Xcode project generation from `project.yml` | MIT |
 
+## Support
+
+MediaGate is free, open-source, and has no ads. If you find it useful, consider supporting development:
+
+- [GitHub Sponsors](https://github.com/sponsors/kemalsanli)
+- In-app tip jar
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

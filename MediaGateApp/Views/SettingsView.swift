@@ -192,6 +192,10 @@ struct SettingsView: View {
             Link(destination: URL(string: "https://github.com/kemalsanli/MediaGate/issues")!) {
                 Label("Report a Bug", systemImage: "ladybug")
             }
+
+            Link(destination: URL(string: "https://github.com/sponsors/kemalsanli")!) {
+                Label("Sponsor on GitHub", systemImage: "heart")
+            }
         } header: {
             Text("Links")
         }
