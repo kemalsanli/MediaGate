@@ -48,21 +48,41 @@ enum TipProduct: String, CaseIterable, Sendable {
     }
 }
 
+/// Checks whether tip products are available from the App Store.
+/// Used to conditionally show/hide the Tip Jar button across the app.
+@MainActor
+final class TipJarAvailability: ObservableObject {
+    static let shared = TipJarAvailability()
+    @Published var isAvailable = false
+
+    private init() {}
+
+    func check() async {
+        let ids = TipProduct.allCases.map(\.rawValue)
+        let products = (try? await Product.products(for: Set(ids))) ?? []
+        isAvailable = !products.isEmpty
+    }
+}
+
 /// Manages StoreKit 2 tip jar purchases.
 @MainActor
 final class TipJarViewModel: ObservableObject {
 
     @Published var products: [Product] = []
+    @Published var isLoading: Bool = true
     @Published var isPurchasing: Bool = false
     @Published var purchaseMessage: String?
     @Published var showThankYou: Bool = false
 
     /// Loads tip products from the App Store.
     func loadProducts() async {
+        isLoading = true
+        defer { isLoading = false }
         do {
             let ids = TipProduct.allCases.map(\.rawValue)
             let storeProducts = try await Product.products(for: Set(ids))
             products = storeProducts.sorted { $0.price < $1.price }
+            // Empty products handled by the view's tipButtons section
         } catch {
             purchaseMessage = String(localized: "Could not load tips.")
         }

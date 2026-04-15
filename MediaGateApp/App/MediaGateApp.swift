@@ -54,6 +54,9 @@ struct MediaGateApp: App {
                 FileManager.default.cleanupAllConversionTempFiles()
                 checkForPendingConversions()
             }
+            .task {
+                await TipJarAvailability.shared.check()
+            }
         }
     }
 

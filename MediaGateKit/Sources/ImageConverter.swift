@@ -92,6 +92,7 @@ public final class NativeImageConverter: ImageConverting, @unchecked Sendable {
     ]
 
     /// Converts images using ImageIO. Handles single and multi-page images.
+    /// Falls back to CIImage/UIImage when ImageIO cannot decode or write the format.
     private func convertWithImageIO(input: URL, outputDir: URL) throws -> [URL] {
         let ext = input.pathExtension.lowercased()
         let isRAW = Self.rawExtensions.contains(ext)
@@ -101,45 +102,97 @@ public final class NativeImageConverter: ImageConverting, @unchecked Sendable {
             return try [processRAW(input: input, outputDir: outputDir)]
         }
 
-        guard let source = CGImageSourceCreateWithURL(input as CFURL, nil) else {
-            throw ImageConversionError.failedToCreateImageSource
+        // PCX: not supported by CGImageSource, use custom decoder
+        if ext == "pcx" {
+            return try [convertPCX(input: input, outputDir: outputDir)]
         }
 
         let format = SupportedFormats.formatInfo(forExtension: ext)
         let outputExt = format?.outputExtension ?? "png"
+        let baseName = input.deletingPathExtension().lastPathComponent
+
+        guard let source = CGImageSourceCreateWithURL(input as CFURL, nil) else {
+            // Fallback: try CIImage for formats CGImageSource can't open
+            return try [convertWithCIImageFallback(input: input, outputDir: outputDir, outputExt: outputExt)]
+        }
+
         let outputType = outputExt == "jpeg" ? UTType.jpeg : UTType.png
         let pageCount = CGImageSourceGetCount(source)
-        let baseName = input.deletingPathExtension().lastPathComponent
+
+        // If CGImageSource reports 0 pages, fall back to CIImage
+        if pageCount == 0 {
+            return try [convertWithCIImageFallback(input: input, outputDir: outputDir, outputExt: outputExt)]
+        }
 
         var outputURLs: [URL] = []
 
         for i in 0..<pageCount {
             guard let image = CGImageSourceCreateImageAtIndex(source, i, nil) else {
-                throw ImageConversionError.failedToReadImage
+                // Fallback: try CIImage when CGImageSource can read the container but not the image
+                if i == 0 {
+                    return try [convertWithCIImageFallback(input: input, outputDir: outputDir, outputExt: outputExt)]
+                }
+                continue
             }
 
             let suffix = pageCount > 1 ? "_\(i + 1)" : ""
             let outputURL = outputDir.appendingPathComponent("\(baseName)\(suffix).\(outputExt)")
 
-            guard let dest = CGImageDestinationCreateWithURL(
-                outputURL as CFURL,
-                outputType.identifier as CFString,
-                1,
-                nil
-            ) else {
-                throw ImageConversionError.failedToCreateDestination
-            }
-
-            CGImageDestinationAddImage(dest, image, nil)
-
-            guard CGImageDestinationFinalize(dest) else {
+            // Try CGImageDestination first, fall back to UIImage if it fails
+            if writeImageWithImageIO(image, to: outputURL, type: outputType) {
+                outputURLs.append(outputURL)
+            } else if let data = outputExt == "jpeg"
+                ? UIImage(cgImage: image).jpegData(compressionQuality: 0.9)
+                : UIImage(cgImage: image).pngData() {
+                try data.write(to: outputURL, options: .atomic)
+                outputURLs.append(outputURL)
+            } else {
                 throw ImageConversionError.failedToWriteImage
             }
-
-            outputURLs.append(outputURL)
         }
 
         return outputURLs
+    }
+
+    private func writeImageWithImageIO(_ image: CGImage, to url: URL, type: UTType) -> Bool {
+        guard let dest = CGImageDestinationCreateWithURL(
+            url as CFURL,
+            type.identifier as CFString,
+            1,
+            nil
+        ) else { return false }
+        CGImageDestinationAddImage(dest, image, nil)
+        return CGImageDestinationFinalize(dest)
+    }
+
+    /// Fallback converter using CIImage for formats that CGImageSource cannot handle.
+    private func convertWithCIImageFallback(input: URL, outputDir: URL, outputExt: String) throws -> URL {
+        let baseName = input.deletingPathExtension().lastPathComponent
+        let outputURL = outputDir.appendingPathComponent("\(baseName).\(outputExt)")
+
+        guard let ciImage = CIImage(contentsOf: input) else {
+            throw ImageConversionError.failedToReadImage
+        }
+
+        let context = CIContext()
+        guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
+            throw ImageConversionError.failedToReadImage
+        }
+
+        let uiImage = UIImage(cgImage: cgImage)
+        let data: Data?
+        if outputExt == "jpeg" {
+            data = uiImage.jpegData(compressionQuality: 0.9)
+        } else {
+            data = uiImage.pngData()
+        }
+
+        guard let imageData = data, imageData.count > 100 else {
+            throw ImageConversionError.failedToWriteImage
+        }
+
+        try imageData.write(to: outputURL, options: .atomic)
+        return outputURL
     }
 
     /// Processes a RAW photo file.
@@ -357,39 +410,31 @@ public final class NativeImageConverter: ImageConverting, @unchecked Sendable {
             throw ImageConversionError.unsupportedFormat("NetPBM \(magicNumber)")
         }
 
-        guard let headerString = String(data: data.prefix(min(data.count, 256)), encoding: .ascii) else {
-            throw ImageConversionError.failedToReadImage
-        }
-
-        // Skip magic number and parse width, height, maxval
+        // Parse header byte-by-byte to avoid ASCII encoding issues with pixel data
+        let bytes = Array(data)
         var tokens: [Int] = []
-        var offset = 0
+        var offset = 2  // Skip magic number
         var inComment = false
         var currentToken = ""
-        let chars = Array(headerString)
-        var headerByteCount = 0
         let neededTokens = hasMaxVal ? 3 : 2
 
-        // Skip magic number
-        offset = 2
-
-        while offset < chars.count && tokens.count < neededTokens {
-            let ch = chars[offset]
-            if ch == "#" {
+        while offset < bytes.count && tokens.count < neededTokens {
+            let byte = bytes[offset]
+            if byte == 0x23 { // '#'
                 inComment = true
-            } else if ch == "\n" || ch == "\r" {
+            } else if byte == 0x0A || byte == 0x0D { // '\n' or '\r'
                 inComment = false
                 if !currentToken.isEmpty {
                     if let val = Int(currentToken) { tokens.append(val) }
                     currentToken = ""
                 }
-            } else if !inComment && (ch == " " || ch == "\t") {
+            } else if !inComment && (byte == 0x20 || byte == 0x09) { // space or tab
                 if !currentToken.isEmpty {
                     if let val = Int(currentToken) { tokens.append(val) }
                     currentToken = ""
                 }
-            } else if !inComment {
-                currentToken.append(ch)
+            } else if !inComment, byte >= 0x30, byte <= 0x39 { // '0'-'9'
+                currentToken.append(Character(UnicodeScalar(byte)))
             }
             offset += 1
         }
@@ -397,9 +442,6 @@ public final class NativeImageConverter: ImageConverting, @unchecked Sendable {
         if !currentToken.isEmpty && tokens.count < neededTokens {
             if let val = Int(currentToken) { tokens.append(val) }
         }
-
-        // The header ends after the final whitespace following the last token
-        headerByteCount = offset + 1 // +1 for the whitespace after the last token
 
         guard tokens.count >= 2 else {
             throw ImageConversionError.failedToReadImage
@@ -409,7 +451,8 @@ public final class NativeImageConverter: ImageConverting, @unchecked Sendable {
         let height = tokens[1]
         let maxVal = hasMaxVal && tokens.count >= 3 ? tokens[2] : 1
 
-        let pixelData = data.dropFirst(min(headerByteCount, data.count))
+        // offset points to the first pixel byte after the header
+        let pixelData = data.dropFirst(min(offset, data.count))
         return NetPBMHeader(
             width: width,
             height: height,
@@ -476,5 +519,114 @@ public final class NativeImageConverter: ImageConverting, @unchecked Sendable {
         }
 
         return cgImage
+    }
+
+    // MARK: - PCX
+
+    /// Decodes a PCX image file (ZSoft Paintbrush format).
+    /// PCX uses a 128-byte header followed by RLE-compressed pixel data.
+    private func convertPCX(input: URL, outputDir: URL) throws -> URL {
+        let data = try Data(contentsOf: input)
+        guard data.count > 128, data[0] == 0x0A else {
+            throw ImageConversionError.failedToReadImage
+        }
+
+        let bitsPerPixel = Int(data[3])
+        let xMin = Int(data[4]) | (Int(data[5]) << 8)
+        let yMin = Int(data[6]) | (Int(data[7]) << 8)
+        let xMax = Int(data[8]) | (Int(data[9]) << 8)
+        let yMax = Int(data[10]) | (Int(data[11]) << 8)
+        let width = xMax - xMin + 1
+        let height = yMax - yMin + 1
+        let numPlanes = Int(data[65])
+        let bytesPerLine = Int(data[66]) | (Int(data[67]) << 8)
+
+        guard width > 0, height > 0, bitsPerPixel == 8, numPlanes >= 1 else {
+            throw ImageConversionError.failedToReadImage
+        }
+
+        // Decode RLE data
+        let scanlineBytes = bytesPerLine * numPlanes
+        var decoded = [UInt8]()
+        decoded.reserveCapacity(scanlineBytes * height)
+        var idx = 128
+
+        while decoded.count < scanlineBytes * height && idx < data.count {
+            let byte = data[idx]
+            idx += 1
+            if byte >= 0xC0 {
+                let count = Int(byte & 0x3F)
+                guard idx < data.count else { break }
+                let value = data[idx]
+                idx += 1
+                for _ in 0..<count {
+                    decoded.append(value)
+                }
+            } else {
+                decoded.append(byte)
+            }
+        }
+
+        // Convert to RGBA
+        var rgbaData = Data(capacity: width * height * 4)
+
+        for y in 0..<height {
+            let lineOffset = y * scanlineBytes
+            for x in 0..<width {
+                let r: UInt8, g: UInt8, b: UInt8
+                if numPlanes == 3 {
+                    r = (lineOffset + x < decoded.count) ? decoded[lineOffset + x] : 0
+                    g = (lineOffset + bytesPerLine + x < decoded.count) ? decoded[lineOffset + bytesPerLine + x] : 0
+                    b = (lineOffset + 2 * bytesPerLine + x < decoded.count) ? decoded[lineOffset + 2 * bytesPerLine + x] : 0
+                } else {
+                    let val = (lineOffset + x < decoded.count) ? decoded[lineOffset + x] : 0
+                    r = val; g = val; b = val
+                }
+                rgbaData.append(r)
+                rgbaData.append(g)
+                rgbaData.append(b)
+                rgbaData.append(255)
+            }
+        }
+
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
+
+        guard let provider = CGDataProvider(data: rgbaData as CFData),
+              let cgImage = CGImage(
+                width: width,
+                height: height,
+                bitsPerComponent: 8,
+                bitsPerPixel: 32,
+                bytesPerRow: width * 4,
+                space: colorSpace,
+                bitmapInfo: bitmapInfo,
+                provider: provider,
+                decode: nil,
+                shouldInterpolate: true,
+                intent: .defaultIntent
+              ) else {
+            throw ImageConversionError.failedToReadImage
+        }
+
+        let baseName = input.deletingPathExtension().lastPathComponent
+        let outputURL = outputDir.appendingPathComponent("\(baseName).png")
+
+        guard let dest = CGImageDestinationCreateWithURL(
+            outputURL as CFURL,
+            UTType.png.identifier as CFString,
+            1,
+            nil
+        ) else {
+            throw ImageConversionError.failedToCreateDestination
+        }
+
+        CGImageDestinationAddImage(dest, cgImage, nil)
+
+        guard CGImageDestinationFinalize(dest) else {
+            throw ImageConversionError.failedToWriteImage
+        }
+
+        return outputURL
     }
 }

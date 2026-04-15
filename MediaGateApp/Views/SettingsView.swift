@@ -28,6 +28,7 @@ struct SettingsView: View {
     @AppStorage("selectedLanguage") private var savedLanguage: String = "system"
     @State private var pendingLanguage: String = ""
     @State private var showTipJar = false
+    @ObservedObject private var tipAvailability = TipJarAvailability.shared
 
     private static let supportedLanguages: [(code: String, name: String)] = [
         ("system", "—"),
@@ -53,7 +54,9 @@ struct SettingsView: View {
                 aboutSection
                 licensesSection
                 linksSection
-                tipJarSection
+                if tipAvailability.isAvailable {
+                    tipJarSection
+                }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)

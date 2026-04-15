@@ -18,8 +18,8 @@ import StoreKit
 
 /// A view that lets users leave optional tips to support the developer.
 ///
-/// Uses StoreKit 2 with three tip tiers. All tips are non-consumable
-/// to keep things simple — tipping is a one-time gesture of support.
+/// Uses StoreKit 2 with six tip tiers. All tips are consumable
+/// so users can tip more than once if they wish.
 struct TipJarView: View {
 
     @StateObject private var viewModel = TipJarViewModel()
@@ -70,13 +70,18 @@ struct TipJarView: View {
 
     private var tipButtons: some View {
         VStack(spacing: 12) {
-            if viewModel.products.isEmpty {
+            if viewModel.isLoading {
                 ProgressView()
                     .padding()
-            } else {
+            } else if !viewModel.products.isEmpty {
                 ForEach(viewModel.products, id: \.id) { product in
                     tipButton(for: product)
                 }
+            } else {
+                Text("Tips are not available right now.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding()
             }
         }
     }

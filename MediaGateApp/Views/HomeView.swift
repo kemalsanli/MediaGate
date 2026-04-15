@@ -23,6 +23,7 @@ struct HomeView: View {
     @State private var showSettings = false
     @State private var showTipJar = false
     @State private var expandedCategory: FormatCategory?
+    @ObservedObject private var tipAvailability = TipJarAvailability.shared
 
     var body: some View {
         NavigationStack {
@@ -30,7 +31,9 @@ struct HomeView: View {
                 VStack(spacing: 28) {
                     heroSection
                     formatsSection
-                    tipJarButton
+                    if tipAvailability.isAvailable {
+                        tipJarButton
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 32)

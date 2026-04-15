@@ -131,6 +131,9 @@ targets:
       - path: MediaGateKit/Tests
         excludes:
           - "**/.DS_Store"
+          - "TestResources/**"
+      - path: MediaGateKit/Tests/TestResources
+        buildPhase: resources
     dependencies:
       - target: MediaGateApp
     settings:
@@ -151,6 +154,7 @@ schemes:
         MediaGateTests: [test]
     run:
       config: Debug
+      storeKitConfiguration: MediaGateApp/Resources/TipProducts.storekit
     test:
       config: Debug
       targets:

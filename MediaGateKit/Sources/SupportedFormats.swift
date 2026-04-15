@@ -65,7 +65,7 @@ public enum SupportedFormats {
 
     public static let convertibleImages: [FormatInfo] = [
         FormatInfo(id: "bmp",   extensions: ["bmp"],                          displayName: "BMP",              category: .image, outputExtension: "png"),
-        FormatInfo(id: "webp",  extensions: ["webp"],                         displayName: "WebP",             category: .image, outputExtension: "png"),
+        FormatInfo(id: "webp",  extensions: ["webp"],                         displayName: "WebP",             category: .image, outputExtension: "jpeg"),
         FormatInfo(id: "tiff",  extensions: ["tiff", "tif"],                  displayName: "TIFF",             category: .image, outputExtension: "jpeg"),
         FormatInfo(id: "svg",   extensions: ["svg"],                          displayName: "SVG",              category: .image, outputExtension: "png"),
         FormatInfo(id: "tga",   extensions: ["tga"],                          displayName: "TGA",              category: .image, outputExtension: "png"),

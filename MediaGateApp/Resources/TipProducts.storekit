@@ -1,0 +1,109 @@
+{
+  "identifier" : "F1E2D3C4-B5A6-7890-ABCD-EF1234567890",
+  "type" : "local",
+  "version" : 3,
+  "products" : [
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "100001",
+      "localizations" : [
+        {
+          "description" : "Support MediaGate development",
+          "displayName" : "Small Tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.kemalsanli.mediagate.tip.small",
+      "referenceName" : "Small Tip",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "100002",
+      "localizations" : [
+        {
+          "description" : "Support MediaGate development",
+          "displayName" : "Medium Tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.kemalsanli.mediagate.tip.medium",
+      "referenceName" : "Medium Tip",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : false,
+      "internalID" : "100003",
+      "localizations" : [
+        {
+          "description" : "Support MediaGate development",
+          "displayName" : "Big Tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.kemalsanli.mediagate.tip.large",
+      "referenceName" : "Big Tip",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "24.99",
+      "familyShareable" : false,
+      "internalID" : "100004",
+      "localizations" : [
+        {
+          "description" : "Support MediaGate development",
+          "displayName" : "Huge Tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.kemalsanli.mediagate.tip.huge",
+      "referenceName" : "Huge Tip",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "49.99",
+      "familyShareable" : false,
+      "internalID" : "100005",
+      "localizations" : [
+        {
+          "description" : "Support MediaGate development",
+          "displayName" : "Mega Tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.kemalsanli.mediagate.tip.mega",
+      "referenceName" : "Mega Tip",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "99.99",
+      "familyShareable" : false,
+      "internalID" : "100006",
+      "localizations" : [
+        {
+          "description" : "Support MediaGate development",
+          "displayName" : "Ultra Tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.kemalsanli.mediagate.tip.ultra",
+      "referenceName" : "Ultra Tip",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      }
+    ]
+  }
+}
